@@ -6,6 +6,7 @@
 # role.
 openstack_projects:
   - "{{ openstack_project_stackhpc }}"
+  - "{{ openstack_project_acrc_iam }}"
 
 # Definition of the openstack demo project. Format is as required by the
 # stackhpc.os-projects role.
@@ -39,6 +40,16 @@ openstack_stackhpc_users:
     email: "scott@stackhpc.com"
     password: "placeholder"
     roles: "{{ openstack_user_roles }}"
+
+openstack_project_acrc_iam:
+  name: "acrc_iam"
+  description: "ACRC IAM project"
+  project_domain: "default"
+  user_domain: "default"
+  users: "{{ openstack_acrc_iam_users }}"
+  quotas: "{{ openstack_unlimited_quotas }}"
+
+openstack_acrc_iam_users: []
 
 # List of roles to apply to regular users in the openstack demo project.
 openstack_user_roles:
@@ -98,6 +109,7 @@ openstack_networks:
   - "{{ openstack_network_external_internet }}"
   - "{{ openstack_network_stackhpc }}"
   - "{{ openstack_network_stackhpc_vlan }}"
+  - "{{ openstack_network_acrc_iam }}"
 
 #
 # External/Internet network
@@ -130,6 +142,7 @@ openstack_subnet_external_internet:
 # stackhpc.os-networks role.
 openstack_routers:
   - "{{ openstack_router_stackhpc }}"
+  - "{{ openstack_router_acrc_iam }}"
 
 # List of security groups in the openstack project.
 # Format is as required by the stackhpc.os-networks role.
@@ -202,6 +215,30 @@ openstack_secgroup_stackhpc:
   project: "{{ openstack_project_stackhpc.name }}"
   rules: "{{ openstack_secgroup_rules_default }}"
 
+## ACRC IAM Network
+openstack_network_acrc_iam:
+  name: "{{ openstack_project_acrc_iam.name }}"
+  project: "{{ openstack_project_acrc_iam.name }}"
+  shared: false
+  external: false
+  # Subnet configuration.
+  subnets:
+    - "{{ openstack_subnet_acrc_iam }}"
+
+openstack_subnet_acrc_iam:
+  name: "{{ openstack_project_acrc_iam.name }}"
+  project: "{{ openstack_project_acrc_iam.name }}"
+  cidr: "192.168.0.0/24"
+  gateway_ip: "192.168.0.1"
+  allocation_pool_start: "192.168.0.10"
+  allocation_pool_end: "192.168.0.250"
+
+openstack_router_acrc_iam:
+  name: "{{ openstack_project_acrc_iam.name }}"
+  project: "{{ openstack_project_acrc_iam.name }}"
+  interfaces:
+    - "{{ openstack_network_acrc_iam.name }}"
+  network: "{{ openstack_network_external_internet.name }}"
 
 ###############################################################################
 # Configuration of nova flavors.
