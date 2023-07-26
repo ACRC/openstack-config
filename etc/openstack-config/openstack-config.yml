@@ -6,6 +6,7 @@
 # role.
 openstack_projects:
   - "{{ openstack_project_stackhpc }}"
+  - "{{ openstack_project_acrc_iam }}"
 
 # Definition of the openstack demo project. Format is as required by the
 # stackhpc.os-projects role.
@@ -45,7 +46,7 @@ openstack_project_acrc_iam:
   description: "ACRC IAM project"
   project_domain: "default"
   user_domain: "default"
-  users: "{{ openstack_iam_users }}"
+  users: "{{ openstack_acrc_iam_users }}"
   quotas: "{{ openstack_unlimited_quotas }}"
 
 openstack_acrc_iam_users: []
