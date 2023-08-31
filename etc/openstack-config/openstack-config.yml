@@ -351,7 +351,286 @@ hpc_v1_96cpu:
 # Configuration of Glance software images.
 
 # List of Glance images. Format is as required by the stackhpc.os-images role.
-#openstack_images:
+# List of additional host packages.
+os_images_package_dependencies_extra:
+  # debootstrap is required to build ubuntu-minimal images.
+  - debootstrap
+
+# Drop cloud-init and stable-interface-names from default elements.
+os_images_common: enable-serial-console
+
+# Set this to true to force rebuilding images.
+os_images_force_rebuild: false
+
+# List of Glance images. Format is as required by the stackhpc.os-images role.
+openstack_images:
+  # - "{{ openstack_image_rocky88 }}"
+  # - "{{ openstack_image_rocky88_ofed2304 }}"
+  # - "{{ openstack_image_rocky88_ofed2304_dev }}"
+  # - "{{ openstack_image_rocky92 }}"
+  - "{{ openstack_image_ubuntu_jammy }}"
+
+# Rocky Linux 8.8 built using a custom containerfile
+openstack_image_rocky88:
+  name: "Rocky-8.8"
+  type: "raw"
+  elements:
+    - "rocky-container"
+    - "cloud-init"
+    - "cloud-init-growpart"
+    - "epel"
+    - "selinux-permissive"
+    - "dhcp-all-interfaces"
+    - "vm"
+    - "grub2"
+    - "openssh-server"
+    - "block-device-efi"
+    - "dracut-regenerate"
+  is_public: True
+  packages:
+    - "gdisk"
+    - "efibootmgr"
+    - "efivar"
+    - "bash-completion"
+    - "git"
+    - "linux-firmware"
+    - "logrotate"
+    - "lshw"
+    - "man-db"
+    - "net-tools"
+    - "nmon"
+    - "pciutils"
+    - "tmux"
+    - "vim-enhanced"
+    - "NetworkManager-initscripts-updown"
+    - "dracut"
+    - "dracut-network"
+  env:
+    DIB_CONTAINERFILE_NETWORK_DRIVER: host
+    DIB_CONTAINERFILE_RUNTIME: docker
+    DIB_CONTAINERFILE_DOCKERFILE: "{{ playbook_dir }}/../containerfiles/rocky-8.8"
+    DIB_CLOUD_INIT_GROWPART_DEVICES:
+      - /
+    YUM: dnf
+    DIB_RELEASE: "8.8"
+    DIB_DRACUT_ENABLED_MODULES:
+      - name: lvm
+        packages:
+          - lvm2
+      - name: kernel-modules
+      - name: kernel-network-modules
+  properties:
+    os_type: "linux"
+    os_distro: "rocky"
+    os_version: "8.8"
+    hw_vif_multiqueue_enabled: true
+    hw_scsi_model: "virtio-scsi"
+    hw_disk_bus: "scsi"
+
+# Rocky 8.8 built with Mellanox OFED 23.04
+openstack_image_rocky88_ofed2304:
+  name: "Rocky-8.8-OFED-23.04"
+  type: "raw"
+  elements:
+    - "rocky-container"
+    - "cloud-init"
+    - "cloud-init-growpart"
+    - "epel"
+    - "selinux-permissive"
+    - "dhcp-all-interfaces"
+    - "vm"
+    - "grub2"
+    - "openssh-server"
+    - "block-device-efi"
+    - "dracut-regenerate"
+  is_public: False
+  packages:
+    - "gdisk"
+    - "efibootmgr"
+    - "efivar"
+    - "bash-completion"
+    - "git"
+    - "linux-firmware"
+    - "logrotate"
+    - "lshw"
+    - "man-db"
+    - "net-tools"
+    - "nmon"
+    - "pciutils"
+    - "tmux"
+    - "vim-enhanced"
+    - "NetworkManager-initscripts-updown"
+    - "dracut"
+    - "dracut-network"
+  env:
+    DIB_CONTAINERFILE_NETWORK_DRIVER: host
+    DIB_CONTAINERFILE_RUNTIME: docker
+    DIB_CONTAINERFILE_DOCKERFILE: "{{ playbook_dir }}/../containerfiles/rocky-8.8-ofed-23.04"
+    DIB_CLOUD_INIT_GROWPART_DEVICES:
+      - /
+    YUM: dnf
+    DIB_RELEASE: "8.8"
+    DIB_DRACUT_ENABLED_MODULES:
+      - name: lvm
+        packages:
+          - lvm2
+      - name: kernel-modules
+      - name: kernel-network-modules
+  properties:
+    os_type: "linux"
+    os_distro: "rocky"
+    os_version: "8.8"
+    hw_vif_multiqueue_enabled: true
+    hw_scsi_model: "virtio-scsi"
+    hw_disk_bus: "scsi"
+
+# Rocky 8.8 built with Mellanox OFED 23.04 + devuser
+openstack_image_rocky88_ofed2304_dev:
+  name: "Rocky-8.8-OFED-23.04-dev"
+  type: "raw"
+  elements:
+    - "rocky-container"
+    - "cloud-init"
+    - "cloud-init-growpart"
+    - "epel"
+    - "selinux-permissive"
+    - "dhcp-all-interfaces"
+    - "vm"
+    - "grub2"
+    - "openssh-server"
+    - "block-device-efi"
+    - "dracut-regenerate"
+    - "devuser"
+  is_public: False
+  packages:
+    - "gdisk"
+    - "efibootmgr"
+    - "efivar"
+    - "bash-completion"
+    - "git"
+    - "linux-firmware"
+    - "logrotate"
+    - "lshw"
+    - "man-db"
+    - "net-tools"
+    - "nmon"
+    - "pciutils"
+    - "tmux"
+    - "vim-enhanced"
+    - "NetworkManager-initscripts-updown"
+    - "dracut"
+    - "dracut-network"
+  env:
+    DIB_DEV_USER_USERNAME: "devuser"
+    DIB_DEV_USER_PASSWORD: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          36346461356139626536656561353063623964356566303264383031653034633566386161333738
+          3831343166353132363332623232376463306138323038330a663231663833393132653965316534
+          36393032656138303632336231383437313532653335393038626132646635353664396233393037
+          3537396337623037370a393739396535316539663061623363376330636466333635646233306664
+          64623262396365373437356235346630613732666537623464663862653463333362
+    DIB_DEV_USER_PWDLESS_SUDO: "yes"
+    DIB_CONTAINERFILE_NETWORK_DRIVER: host
+    DIB_CONTAINERFILE_RUNTIME: docker
+    DIB_CONTAINERFILE_DOCKERFILE: "{{ playbook_dir }}/../containerfiles/rocky-8.8-ofed-23.04"
+    DIB_CLOUD_INIT_GROWPART_DEVICES:
+      - /
+    YUM: dnf
+    DIB_RELEASE: "8.8"
+    DIB_DRACUT_ENABLED_MODULES:
+      - name: lvm
+        packages:
+          - lvm2
+      - name: kernel-modules
+      - name: kernel-network-modules
+  properties:
+    os_type: "linux"
+    os_distro: "rocky"
+    os_version: "8.8"
+    hw_vif_multiqueue_enabled: true
+    hw_scsi_model: "virtio-scsi"
+    hw_disk_bus: "scsi"
+
+# Rocky Linux 9.2 built from custom containerfile
+openstack_image_rocky92:
+  name: "Rocky-9.2"
+  type: "raw"
+  elements:
+    - "rocky-container"
+    - "cloud-init"
+    - "cloud-init-growpart"
+    - "selinux-permissive"
+    - "vm"
+    - "grub2"
+    - "openssh-server"
+  is_public: True
+  packages:
+    - "git"
+    - "tmux"
+    - "vim-enhanced"
+  env:
+    DIB_CONTAINERFILE_NETWORK_DRIVER: host
+    DIB_CONTAINERFILE_RUNTIME: docker
+    DIB_CONTAINERFILE_DOCKERFILE: "{{ playbook_dir }}/../containerfiles/rocky-9.2"
+    YUM: dnf
+    DIB_CLOUD_INIT_GROWPART_DEVICES:
+      - "/"
+    DIB_RELEASE: "9.2"
+  properties:
+    os_type: "linux"
+    os_distro: "rocky"
+    os_version: "9.2"
+    hw_vif_multiqueue_enabled: true
+    hw_scsi_model: "virtio-scsi"
+    hw_disk_bus: "scsi"
+
+# Ubuntu Jammy 22.04
+openstack_image_ubuntu_jammy:
+  name: "Ubuntu-22.04"
+  type: "raw"
+  is_public: True
+  elements:
+    - "cloud-init"
+    - "grub2"
+    - "openssh-server"
+    - "ubuntu-minimal"
+    - "vm"
+    - "dhcp-all-interfaces"
+  packages:
+    - "bash-completion"
+    - "git"
+    - "less"
+    - "logrotate"
+    - "lshw"
+    - "man-db"
+    - "net-tools"
+    - "nmon"
+    - "pciutils"
+    - "tmux"
+    - "iputils-ping"
+    - "netbase"
+    - "apt-utils"
+    - "curl"
+    - "debootstrap"
+    - "vim"
+  properties:
+    os_type: "linux"
+    os_distro: "ubuntu"
+    os_version: "jammy"
+    hw_rng_model: "virtio"
+    hw_vif_multiqueue_enabled: true
+    hw_scsi_model: "virtio-scsi"
+    hw_disk_bus: "scsi"
+  env:
+    DIB_RELEASE: "jammy"
+
+
+openstack_image_git_elements:
+  - repo: "https://github.com/stackhpc/stackhpc-image-elements"
+    local: "{{ playbook_dir }}/stackhpc-image-elements"
+    version: master
+    elements_path: elements
+
 
 # List of Diskimage Builder (DIB) elements paths to include in image builds.
 #openstack_image_elements:
