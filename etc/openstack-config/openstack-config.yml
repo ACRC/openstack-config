@@ -99,6 +99,8 @@ openstack_networks:
   - "{{ openstack_network_stackhpc }}"
   - "{{ openstack_network_stackhpc_vlan }}"
 
+openstack_networks_rbac:
+  - "{{ openstack_rbac_external_ceph }}"
 
 #
 # External/Internet network
@@ -127,7 +129,53 @@ openstack_subnet_external_internet:
   allocation_pool_start: "10.129.30.20"
   allocation_pool_end: "10.129.31.240"
 
-#openstack_networks:
+#
+# External/Ceph network
+#
+openstack_network_external_ceph_name: "external-ceph"
+
+# The External/Ceph network is owned by the admin project and shared
+# via RBAC with projects that require direct access to Ceph storage
+# (eg, for Manila CephFS native access).  The network access control
+# is set as "access as shared" for those tenant networks.
+openstack_network_external_ceph:
+  name: "{{ openstack_network_external_ceph_name }}"
+  project: "admin"
+  provider_network_type: "vlan"
+  provider_physical_network: "physnet2"
+  provider_segmentation_id: 8
+  shared: false
+  external: false
+  mtu: 9150
+  # Subnet configuration.
+  subnets:
+    - "{{ openstack_subnet_external_ceph }}"
+
+# There is no route out from this network for VMs
+# Reserve some space at the bottom of the network for Ceph IPs
+openstack_subnet_external_ceph:
+  name: "{{ openstack_network_external_ceph_name }}"
+  project: "admin"
+  cidr: "10.0.0.0/20"
+  allocation_pool_start: "10.0.0.2"
+  allocation_pool_end: "10.0.15.250"
+  host_routes:
+    - destination: "10.129.27.0/25"
+      nexthop: "10.0.15.254"
+
+# The External/Ceph network is shared as an additional tenant
+# VLAN for approved projects requiring high-speed direct access
+# to the Ceph cluster.  Those projects don't get to attach routers
+# or make other changes to the external-ceph network, but can attach
+# VM network ports to the shared network.  VMs from different
+# projects are on the same network but isolated from one another
+# by security groups.
+# Those projects are listed here.
+openstack_rbac_external_ceph:
+  network: "{{ openstack_network_external_ceph_name }}"
+  access: "access_as_shared"
+  projects:
+    - "{{ openstack_project_stackhpc.name }}"
 
 # List of routers in the openstack project. Format is as required by the
 # stackhpc.os-networks role.
