@@ -10,7 +10,7 @@ ARG rocky_version=9.2
 #RUN systemd-machine-id-setup
 
 # Pin to an older version of Rocky Linux by setting a DNF package variable
-RUN echo "9.2" > /etc/dnf/vars/releasever && dnf update -y --refresh
+# RUN echo "9.2" > /etc/dnf/vars/releasever && dnf update -y --refresh
 
 # Install/remove packages from https://git.rockylinux.org/rocky/kickstarts/-/blob/r8/Rocky-8-GenericCloud.ks
 RUN dnf install -y @core --allowerasing

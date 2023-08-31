@@ -6,6 +6,7 @@
 # role.
 openstack_projects:
   - "{{ openstack_project_stackhpc }}"
+  - "{{ project_cloud_services }}"
   - "{{ openstack_project_azimuth }}"
 
 # Definition of the openstack demo project. Format is as required by the
@@ -41,6 +42,14 @@ openstack_stackhpc_users:
     password: "placeholder"
     roles: "{{ openstack_user_roles }}"
 
+project_cloud_services:
+  name: "cloud-services"
+  description: "Internal Cloud services"
+  project_domain: default
+  user_domain: default
+  users: []
+  quotas: "{{ openstack_project_quotas }}"
+
 # List of roles to apply to regular users in the openstack demo project.
 openstack_user_roles:
   - member
@@ -51,7 +60,6 @@ openstack_user_roles:
   # This allows a user read access to Barbican secrets.
   # https://docs.openstack.org/barbican/latest/admin/access_control.html
   - observer
-
 
 openstack_project_azimuth:
   name: "azimuth"
@@ -106,8 +114,12 @@ openstack_unlimited_quotas:
 # stackhpc.os-networks role.
 openstack_networks:
   - "{{ openstack_network_external_internet }}"
+  - "{{ openstack_network_external_ceph }}"
   - "{{ openstack_network_stackhpc }}"
   - "{{ openstack_network_stackhpc_vlan }}"
+
+openstack_networks_rbac:
+  - "{{ openstack_rbac_external_ceph }}"
 
 #
 # External/Internet network
@@ -136,6 +148,54 @@ openstack_subnet_external_internet:
   allocation_pool_start: "10.129.30.20"
   allocation_pool_end: "10.129.31.240"
 
+#
+# External/Ceph network
+#
+openstack_network_external_ceph_name: "external-ceph"
+
+# The External/Ceph network is owned by the admin project and shared
+# via RBAC with projects that require direct access to Ceph storage
+# (eg, for Manila CephFS native access).  The network access control
+# is set as "access as shared" for those tenant networks.
+openstack_network_external_ceph:
+  name: "{{ openstack_network_external_ceph_name }}"
+  project: "admin"
+  provider_network_type: "vlan"
+  provider_physical_network: "physnet2"
+  provider_segmentation_id: 8
+  shared: false
+  external: false
+  mtu: 9150
+  # Subnet configuration.
+  subnets:
+    - "{{ openstack_subnet_external_ceph }}"
+
+# There is no route out from this network for VMs
+# Reserve some space at the bottom of the network for Ceph IPs
+openstack_subnet_external_ceph:
+  name: "{{ openstack_network_external_ceph_name }}"
+  project: "admin"
+  cidr: "10.0.0.0/20"
+  allocation_pool_start: "10.0.0.2"
+  allocation_pool_end: "10.0.15.250"
+  host_routes:
+    - destination: "10.129.27.0/25"
+      nexthop: "10.0.15.254"
+
+# The External/Ceph network is shared as an additional tenant
+# VLAN for approved projects requiring high-speed direct access
+# to the Ceph cluster.  Those projects don't get to attach routers
+# or make other changes to the external-ceph network, but can attach
+# VM network ports to the shared network.  VMs from different
+# projects are on the same network but isolated from one another
+# by security groups.
+# Those projects are listed here.
+openstack_rbac_external_ceph:
+  network: "{{ openstack_network_external_ceph_name }}"
+  access: "access_as_shared"
+  projects:
+    - "{{ openstack_project_stackhpc.name }}"
+
 # List of routers in the openstack project. Format is as required by the
 # stackhpc.os-networks role.
 openstack_routers:
@@ -145,6 +205,7 @@ openstack_routers:
 # Format is as required by the stackhpc.os-networks role.
 openstack_security_groups:
   - "{{ openstack_secgroup_stackhpc }}"
+  - "{{ secgroup_nvidia_dls }}"
 
 # Default security group rule settings for a project
 openstack_secgroup_rules_default:
@@ -156,6 +217,34 @@ openstack_secgroup_rules_default:
     protocol: tcp
     port_range_min: 22
     port_range_max: 22
+
+secgroup_rules_nvidia_dls:
+  # Allow ICMP (for ping, etc.).
+  - ethertype: IPv4
+    protocol: icmp
+  # Allow SSH.
+  - ethertype: IPv4
+    protocol: tcp
+    port_range_min: 22
+    port_range_max: 22
+  # https://docs.nvidia.com/license-system/latest/nvidia-license-system-user-guide/index.html
+  - ethertype: IPv4
+    protocol: tcp
+    port_range_min: 443
+    port_range_max: 443
+  - ethertype: IPv4
+    protocol: tcp
+    port_range_min: 80
+    port_range_max: 80
+  - ethertype: IPv4
+    protocol: tcp
+    port_range_min: 7070
+    port_range_max: 7070
+
+secgroup_nvidia_dls:
+  name: nvidia-dls
+  project: "{{ project_cloud_services.name }}"
+  rules: "{{ secgroup_rules_nvidia_dls }}"
 
 ################################################################################
 # Networks for stackhpc
@@ -219,14 +308,187 @@ openstack_secgroup_stackhpc:
 # List of nova flavors in the openstack project. Format is as required by the
 # stackhpc.os-flavors role.
 openstack_flavors:
-  - "{{ openstack_flavor_godzilla }}"
+#  - "{{ openstack_flavor_godzilla }}"
+  - "{{ vgpu_a100d_2g_20gb }}"
+  - "{{ vgpu_a100d_1g_10gb }}"
+  - "{{ vgpu_a100d_40c }}"
+  - "{{ hpc_v1_8cpu }}"
+  - "{{ hpc_v1_16cpu }}"
+  - "{{ hpc_v1_32cpu }}"
+  - "{{ hpc_v1_48cpu }}"
+  - "{{ hpc_v1_64cpu }}"
+  - "{{ hpc_v1_80cpu }}"
+  - "{{ hpc_v1_96cpu }}"
 
-openstack_flavor_godzilla:
-  name: "godzilla"
+# openstack_flavor_godzilla:
+#   name: "godzilla"
+#   ram: 393216
+#   disk: 50
+#   vcpus: 96
+#   is_public: true
+#   extra_specs:
+#     hw:cpu_policy: "dedicated"
+#     hw:cpu_thread_policy: "prefer"
+#     hw:cpu_threads: 2
+#     hw:mem_page_size: "1GB"
+#     hw:cpu_sockets: 2
+#     hw:numa_nodes: 8
+#     hw:pci_numa_affinity_policy: preferred
+#     hw_rng:allowed: "True"
+
+# HPC v1:
+# Core-pinned VCPUs
+# 4GB RAM per VCPU
+# Spread across NUMA regions (but in thread sibling pairs)
+#
+hpc_v1_8cpu:
+  name: "hpc.v1.8cpu"
+  ram: 32768
+  disk: 30
+  vcpus: 8
+  is_public: false
+  extra_specs:
+    hw:cpu_policy: "dedicated"
+    hw:cpu_thread_policy: "prefer"
+    hw:cpu_threads: 2
+    hw:mem_page_size: "1GB"
+    hw:cpu_sockets: 2
+    hw:numa_nodes: 8
+    hw:pci_numa_affinity_policy: preferred
+    hw_rng:allowed: "True"
+
+hpc_v1_16cpu:
+  name: "hpc.v1.16cpu"
+  ram: 65536
+  disk: 30
+  vcpus: 16
+  is_public: false
+  extra_specs:
+    hw:cpu_policy: "dedicated"
+    hw:cpu_thread_policy: "prefer"
+    hw:cpu_threads: 2
+    hw:mem_page_size: "1GB"
+    hw:cpu_sockets: 2
+    hw:numa_nodes: 8
+    hw:pci_numa_affinity_policy: preferred
+    hw_rng:allowed: "True"
+
+hpc_v1_32cpu:
+  name: "hpc.v1.32cpu"
+  ram: 131072
+  disk: 30
+  vcpus: 32
+  is_public: false
+  extra_specs:
+    hw:cpu_policy: "dedicated"
+    hw:cpu_thread_policy: "prefer"
+    hw:cpu_threads: 2
+    hw:mem_page_size: "1GB"
+    hw:cpu_sockets: 2
+    hw:numa_nodes: 8
+    hw:pci_numa_affinity_policy: preferred
+    hw_rng:allowed: "True"
+
+hpc_v1_48cpu:
+  name: "hpc.v1.48cpu"
+  ram: 196608
+  disk: 30
+  vcpus: 48
+  is_public: false
+  extra_specs:
+    hw:cpu_policy: "dedicated"
+    hw:cpu_thread_policy: "prefer"
+    hw:cpu_threads: 2
+    hw:mem_page_size: "1GB"
+    hw:cpu_sockets: 2
+    hw:numa_nodes: 8
+    hw:pci_numa_affinity_policy: preferred
+    hw_rng:allowed: "True"
+
+hpc_v1_64cpu:
+  name: "hpc.v1.64cpu"
+  ram: 262144
+  disk: 30
+  vcpus: 64
+  is_public: false
+  extra_specs:
+    hw:cpu_policy: "dedicated"
+    hw:cpu_thread_policy: "prefer"
+    hw:cpu_threads: 2
+    hw:mem_page_size: "1GB"
+    hw:cpu_sockets: 2
+    hw:numa_nodes: 8
+    hw:pci_numa_affinity_policy: preferred
+    hw_rng:allowed: "True"
+
+hpc_v1_80cpu:
+  name: "hpc.v1.80cpu"
+  ram: 327680
+  disk: 30
+  vcpus: 80
+  is_public: false
+  extra_specs:
+    hw:cpu_policy: "dedicated"
+    hw:cpu_thread_policy: "prefer"
+    hw:cpu_threads: 2
+    hw:mem_page_size: "1GB"
+    hw:cpu_sockets: 2
+    hw:numa_nodes: 8
+    hw:pci_numa_affinity_policy: preferred
+    hw_rng:allowed: "True"
+
+hpc_v1_96cpu:
+  name: "hpc.v1.96cpu"
   ram: 393216
-  disk: 50
+  disk: 30
   vcpus: 96
-  is_public: true
+  is_public: false
+  extra_specs:
+    hw:cpu_policy: "dedicated"
+    hw:cpu_thread_policy: "prefer"
+    hw:cpu_threads: 2
+    hw:mem_page_size: "1GB"
+    hw:cpu_sockets: 2
+    hw:numa_nodes: 8
+    hw:pci_numa_affinity_policy: preferred
+    hw_rng:allowed: "True"
+
+vgpu_a100d_2g_20gb:
+  name: "vgpu.a100d.2g.20gb"
+  ram: 32768
+  disk: 30
+  vcpus: 8
+  is_public: false
+  extra_specs:
+    hw:cpu_policy: "dedicated"
+    hw:cpu_thread_policy: "prefer"
+    hw:mem_page_size: "1GB"
+    hw:cpu_sockets: 2
+    hw:numa_nodes: 4
+    hw_rng:allowed: "True"
+    resources:CUSTOM_NVIDIA_700: "1"
+
+vgpu_a100d_1g_10gb:
+  name: "vgpu.a100d.1g.10gb"
+  ram: 16384
+  disk: 30
+  vcpus: 4
+  is_public: false
+  extra_specs:
+    hw:cpu_policy: "dedicated"
+    hw:cpu_thread_policy: "prefer"
+    hw:mem_page_size: "1GB"
+    hw:cpu_sockets: 2
+    hw:numa_nodes: 2
+    hw_rng:allowed: "True"
+    resources:CUSTOM_NVIDIA_699: "1"
+
+vgpu_a100d_40c:
+  name: "vgpu.a100d.40c"
+  ram: 65536
+  disk: 30
+  vcpus: 16
+  is_public: false
   extra_specs:
     hw:cpu_policy: "dedicated"
     hw:cpu_thread_policy: "prefer"
@@ -234,7 +496,8 @@ openstack_flavor_godzilla:
     hw:cpu_sockets: 2
     hw:numa_nodes: 8
     hw_rng:allowed: "True"
-    pci_passthrough: alias='CX6:1'
+    resources:CUSTOM_NVIDIA_697: "1"
+
 
 ###############################################################################
 # Configuration of nova host aggregates.
@@ -265,6 +528,7 @@ openstack_images:
   - "{{ openstack_image_rocky88_ofed2304_dev }}"
   - "{{ openstack_image_rocky92 }}"
   - "{{ openstack_image_ubuntu_jammy }}"
+  - "{{ image_rocky9_nvidia }}"
 
 # Rocky Linux 8.8 built using a custom containerfile
 openstack_image_rocky88:
@@ -491,6 +755,7 @@ openstack_image_ubuntu_jammy:
     - "openssh-server"
     - "ubuntu-minimal"
     - "vm"
+    - "dhcp-all-interfaces"
   packages:
     - "bash-completion"
     - "git"
@@ -518,6 +783,54 @@ openstack_image_ubuntu_jammy:
     hw_disk_bus: "scsi"
   env:
     DIB_RELEASE: "jammy"
+
+image_rocky9_nvidia:
+  name: "Rocky9-NVIDIA"
+  type: raw
+  elements:
+    - "rocky-container"
+    - "rpm"
+    - "nvidia-vgpu"
+    - "cloud-init"
+    - "epel"
+    - "cloud-init-growpart"
+    - "selinux-permissive"
+    - "dhcp-all-interfaces"
+    - "vm"
+    - "extra-repos"
+    - "grub2"
+    - "stable-interface-names"
+    - "openssh-server"
+  is_public: True
+  packages:
+    - "dkms"
+    - "git"
+    - "tmux"
+    - "cuda-minimal-build-12-1"
+    - "cuda-demo-suite-12-1"
+    - "cuda-libraries-12-1"
+    - "cuda-toolkit"
+    - "vim-enhanced"
+  env:
+    DIB_CONTAINERFILE_NETWORK_DRIVER: host
+    DIB_CONTAINERFILE_RUNTIME: docker
+    DIB_RPMS: "http://10.129.28.41:80/pulp/content/nvidia/nvidia-linux-grid-525-525.125.06-1.x86_64.rpm"
+    YUM: dnf
+    DIB_EXTRA_REPOS: "https://developer.download.nvidia.com/compute/cuda/repos/rhel9/x86_64/cuda-rhel9.repo"
+    DIB_NVIDIA_VGPU_CLIENT_TOKEN: "{{ lookup('file' , 'secrets/nvidia-client-token.tok') }}"
+    DIB_CLOUD_INIT_GROWPART_DEVICES:
+      - "/"
+    DIB_RELEASE: "9"
+  properties:
+    os_type: "linux"
+    os_distro: "rocky"
+    os_version: "9"
+
+openstack_image_git_elements:
+  - repo: "https://github.com/stackhpc/stackhpc-image-elements"
+    local: "{{ playbook_dir }}/stackhpc-image-elements"
+    version: master
+    elements_path: elements
 
 
 # List of Diskimage Builder (DIB) elements paths to include in image builds.
