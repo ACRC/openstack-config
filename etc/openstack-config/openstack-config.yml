@@ -93,15 +93,104 @@ openstack_unlimited_quotas:
 
 # List of networks in the openstack system. Format is as required by the
 # stackhpc.os-networks role.
+openstack_networks:
+  - "{{ openstack_network_external_internet }}"
+  - "{{ openstack_network_external_ceph }}"
+  - "{{ openstack_network_stackhpc }}"
+  - "{{ openstack_network_stackhpc_vlan }}"
+
+
+#
+# External/Internet network
+# Actually still a private subnet range but intended for outward-facing
+# networking.
+#
+openstack_network_external_internet_name: "external"
+
+openstack_network_external_internet:
+  name: "{{ openstack_network_external_internet_name }}"
+  project: "admin"
+  provider_network_type: "vlan"
+  provider_physical_network: "physnet1"
+  provider_segmentation_id: 2803
+  shared: false
+  external: true
+  # Subnet configuration.
+  subnets:
+    - "{{ openstack_subnet_external_internet }}"
+
+openstack_subnet_external_internet:
+  name: "{{ openstack_network_external_internet_name }}"
+  project: "admin"
+  cidr: "10.129.30.0/23"
+  gateway_ip: "10.129.31.254"
+  allocation_pool_start: "10.129.30.20"
+  allocation_pool_end: "10.129.31.240"
+
 #openstack_networks:
 
 # List of routers in the openstack project. Format is as required by the
 # stackhpc.os-networks role.
-#openstack_routers:
+openstack_routers:
+  - "{{ openstack_router_stackhpc }}"
 
 # List of security groups in the openstack project.
 # Format is as required by the stackhpc.os-networks role.
-#openstack_security_groups:
+################################################################################
+# Networks for stackhpc
+#
+openstack_network_stackhpc:
+  name: "{{ openstack_project_stackhpc.name }}"
+  project: "{{ openstack_project_stackhpc.name }}"
+  shared: false
+  external: false
+  # Subnet configuration.
+  subnets:
+    - "{{ openstack_subnet_stackhpc }}"
+
+openstack_subnet_stackhpc:
+  name: "{{ openstack_project_stackhpc.name }}"
+  project: "{{ openstack_project_stackhpc.name }}"
+  cidr: "192.168.0.0/24"
+  gateway_ip: "192.168.0.1"
+  allocation_pool_start: "192.168.0.10"
+  allocation_pool_end: "192.168.0.250"
+
+openstack_network_stackhpc_vlan:
+  name: "{{ openstack_project_stackhpc.name }}-vlan"
+  project: "{{ openstack_project_stackhpc.name }}"
+  shared: false
+  external: false
+  provider_network_type: "vlan"
+  provider_physical_network: "physnet2"
+  # This may be required for RDMA traffic
+  port_security_enabled: false
+  mtu: 9000
+  # Subnet configuration.
+  subnets:
+    - "{{ openstack_subnet_stackhpc_vlan }}"
+
+openstack_subnet_stackhpc_vlan:
+  name: "{{ openstack_project_stackhpc.name }}-vlan"
+  project: "{{ openstack_project_stackhpc.name }}"
+  cidr: "192.168.1.0/24"
+  gateway_ip: "192.168.1.1"
+  allocation_pool_start: "192.168.1.10"
+  allocation_pool_end: "192.168.1.250"
+
+openstack_router_stackhpc:
+  name: "{{ openstack_project_stackhpc.name }}"
+  project: "{{ openstack_project_stackhpc.name }}"
+  interfaces:
+    - "{{ openstack_network_stackhpc.name }}"
+    - "{{ openstack_network_stackhpc_vlan.name }}"
+  network: "{{ openstack_network_external_internet.name }}"
+
+openstack_secgroup_stackhpc:
+  name: default
+  project: "{{ openstack_project_stackhpc.name }}"
+  rules: "{{ openstack_secgroup_rules_default }}"
+
 
 ###############################################################################
 # Configuration of nova flavors.
