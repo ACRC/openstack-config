@@ -6,7 +6,7 @@
 # role.
 openstack_projects:
   - "{{ openstack_project_stackhpc }}"
-  # - "{{ project_cloud_services }}"
+  - "{{ project_cloud_services }}"
   - "{{ openstack_project_azimuth }}"
 
 # Definition of the openstack demo project. Format is as required by the
@@ -204,7 +204,7 @@ openstack_routers:
 # List of security groups in the openstack project.
 # Format is as required by the stackhpc.os-networks role.
 openstack_security_groups:
-#  - "{{ openstack_secgroup_stackhpc }}"
+  - "{{ openstack_secgroup_stackhpc }}"
   - "{{ secgroup_nvidia_dls }}"
 
 # Default security group rule settings for a project
@@ -309,9 +309,9 @@ openstack_secgroup_stackhpc:
 # stackhpc.os-flavors role.
 openstack_flavors:
 #  - "{{ openstack_flavor_godzilla }}"
-  # - "{{ vgpu_a100d_2g_20gb }}"
-  # - "{{ vgpu_a100d_1g_10gb }}"
-  # - "{{ vgpu_a100d_40c }}"
+  - "{{ vgpu_a100d_2g_20gb }}"
+  - "{{ vgpu_a100d_1g_10gb }}"
+  - "{{ vgpu_a100d_40c }}"
   - "{{ hpc_v1_8cpu }}"
   - "{{ hpc_v1_16cpu }}"
   - "{{ hpc_v1_32cpu }}"
@@ -523,12 +523,12 @@ os_images_force_rebuild: false
 
 # List of Glance images. Format is as required by the stackhpc.os-images role.
 openstack_images:
-  # - "{{ openstack_image_rocky88 }}"
-  # - "{{ openstack_image_rocky88_ofed2304 }}"
-  # - "{{ openstack_image_rocky88_ofed2304_dev }}"
-  # - "{{ openstack_image_rocky92 }}"
+  - "{{ openstack_image_rocky88 }}"
+  - "{{ openstack_image_rocky88_ofed2304 }}"
+  - "{{ openstack_image_rocky88_ofed2304_dev }}"
+  - "{{ openstack_image_rocky92 }}"
   - "{{ openstack_image_ubuntu_jammy }}"
-  # - "{{ image_rocky9_nvidia }}"
+  - "{{ image_rocky9_nvidia }}"
 
 # Rocky Linux 8.8 built using a custom containerfile
 openstack_image_rocky88:
