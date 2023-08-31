@@ -136,6 +136,49 @@ openstack_routers:
 
 # List of security groups in the openstack project.
 # Format is as required by the stackhpc.os-networks role.
+openstack_security_groups:
+#  - "{{ openstack_secgroup_stackhpc }}"
+  - "{{ secgroup_nvidia_dls }}"
+
+# Default security group rule settings for a project
+openstack_secgroup_rules_default:
+  # Allow ICMP (for ping, etc.).
+  - ethertype: IPv4
+    protocol: icmp
+  # Allow SSH.
+  - ethertype: IPv4
+    protocol: tcp
+    port_range_min: 22
+    port_range_max: 22
+
+secgroup_rules_nvidia_dls:
+  # Allow ICMP (for ping, etc.).
+  - ethertype: IPv4
+    protocol: icmp
+  # Allow SSH.
+  - ethertype: IPv4
+    protocol: tcp
+    port_range_min: 22
+    port_range_max: 22
+  # https://docs.nvidia.com/license-system/latest/nvidia-license-system-user-guide/index.html
+  - ethertype: IPv4
+    protocol: tcp
+    port_range_min: 443
+    port_range_max: 443
+  - ethertype: IPv4
+    protocol: tcp
+    port_range_min: 80
+    port_range_max: 80
+  - ethertype: IPv4
+    protocol: tcp
+    port_range_min: 7070
+    port_range_max: 7070
+
+secgroup_nvidia_dls:
+  name: nvidia-dls
+  project: "{{ project_cloud_services.name }}"
+  rules: "{{ secgroup_rules_nvidia_dls }}"
+
 ################################################################################
 # Networks for stackhpc
 #
@@ -199,6 +242,9 @@ openstack_secgroup_stackhpc:
 # stackhpc.os-flavors role.
 openstack_flavors:
 #  - "{{ openstack_flavor_godzilla }}"
+  # - "{{ vgpu_a100d_2g_20gb }}"
+  # - "{{ vgpu_a100d_1g_10gb }}"
+  # - "{{ vgpu_a100d_40c }}"
   - "{{ hpc_v1_8cpu }}"
   - "{{ hpc_v1_16cpu }}"
   - "{{ hpc_v1_32cpu }}"
@@ -340,6 +386,52 @@ hpc_v1_96cpu:
     hw:pci_numa_affinity_policy: preferred
     hw_rng:allowed: "True"
 
+vgpu_a100d_2g_20gb:
+  name: "vgpu.a100d.2g.20gb"
+  ram: 32768
+  disk: 30
+  vcpus: 8
+  is_public: false
+  extra_specs:
+    hw:cpu_policy: "dedicated"
+    hw:cpu_thread_policy: "prefer"
+    hw:mem_page_size: "1GB"
+    hw:cpu_sockets: 2
+    hw:numa_nodes: 4
+    hw_rng:allowed: "True"
+    resources:CUSTOM_NVIDIA_700: "1"
+
+vgpu_a100d_1g_10gb:
+  name: "vgpu.a100d.1g.10gb"
+  ram: 16384
+  disk: 30
+  vcpus: 4
+  is_public: false
+  extra_specs:
+    hw:cpu_policy: "dedicated"
+    hw:cpu_thread_policy: "prefer"
+    hw:mem_page_size: "1GB"
+    hw:cpu_sockets: 2
+    hw:numa_nodes: 2
+    hw_rng:allowed: "True"
+    resources:CUSTOM_NVIDIA_699: "1"
+
+vgpu_a100d_40c:
+  name: "vgpu.a100d.40c"
+  ram: 65536
+  disk: 30
+  vcpus: 16
+  is_public: false
+  extra_specs:
+    hw:cpu_policy: "dedicated"
+    hw:cpu_thread_policy: "prefer"
+    hw:mem_page_size: "1GB"
+    hw:cpu_sockets: 2
+    hw:numa_nodes: 8
+    hw_rng:allowed: "True"
+    resources:CUSTOM_NVIDIA_697: "1"
+
+
 ###############################################################################
 # Configuration of nova host aggregates.
 
@@ -369,6 +461,7 @@ openstack_images:
   # - "{{ openstack_image_rocky88_ofed2304_dev }}"
   # - "{{ openstack_image_rocky92 }}"
   - "{{ openstack_image_ubuntu_jammy }}"
+  # - "{{ image_rocky9_nvidia }}"
 
 # Rocky Linux 8.8 built using a custom containerfile
 openstack_image_rocky88:
@@ -624,6 +717,47 @@ openstack_image_ubuntu_jammy:
   env:
     DIB_RELEASE: "jammy"
 
+image_rocky9_nvidia:
+  name: "Rocky9-NVIDIA"
+  type: raw
+  elements:
+    - "rocky-container"
+    - "rpm"
+    - "nvidia-vgpu"
+    - "cloud-init"
+    - "epel"
+    - "cloud-init-growpart"
+    - "selinux-permissive"
+    - "dhcp-all-interfaces"
+    - "vm"
+    - "extra-repos"
+    - "grub2"
+    - "stable-interface-names"
+    - "openssh-server"
+  is_public: True
+  packages:
+    - "dkms"
+    - "git"
+    - "tmux"
+    - "cuda-minimal-build-12-1"
+    - "cuda-demo-suite-12-1"
+    - "cuda-libraries-12-1"
+    - "cuda-toolkit"
+    - "vim-enhanced"
+  env:
+    DIB_CONTAINERFILE_NETWORK_DRIVER: host
+    DIB_CONTAINERFILE_RUNTIME: docker
+    DIB_RPMS: "http://10.129.28.41:80/pulp/content/nvidia/nvidia-linux-grid-525-525.125.06-1.x86_64.rpm"
+    YUM: dnf
+    DIB_EXTRA_REPOS: "https://developer.download.nvidia.com/compute/cuda/repos/rhel9/x86_64/cuda-rhel9.repo"
+    DIB_NVIDIA_VGPU_CLIENT_TOKEN: "{{ lookup('file' , 'secrets/nvidia-client-token.tok') }}"
+    DIB_CLOUD_INIT_GROWPART_DEVICES:
+      - "/"
+    DIB_RELEASE: "9"
+  properties:
+    os_type: "linux"
+    os_distro: "rocky"
+    os_version: "9"
 
 openstack_image_git_elements:
   - repo: "https://github.com/stackhpc/stackhpc-image-elements"
