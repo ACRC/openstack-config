@@ -6,6 +6,7 @@
 # role.
 openstack_projects:
   - "{{ openstack_project_stackhpc }}"
+  - "{{ openstack_project_azimuth }}"
 
 # Definition of the openstack demo project. Format is as required by the
 # stackhpc.os-projects role.
@@ -50,6 +51,15 @@ openstack_user_roles:
   # This allows a user read access to Barbican secrets.
   # https://docs.openstack.org/barbican/latest/admin/access_control.html
   - observer
+
+
+openstack_project_azimuth:
+  name: "azimuth"
+  description: "A project for hosting Azimuth management resources"
+  project_domain: "default"
+  user_domain: "default"
+  users: "{{ openstack_stackhpc_users }}"
+  quotas: "{{ openstack_project_quotas }}"
 
 # Dict of quotas to set for projects with basic resource quotas
 openstack_project_quotas:
