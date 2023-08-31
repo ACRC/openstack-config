@@ -6,6 +6,8 @@
 # role.
 openstack_projects:
  - "{{ openstack_project_stackhpc }}"
+  # - "{{ project_cloud_services }}"
+
 # Definition of the openstack demo project. Format is as required by the
 # stackhpc.os-projects role.
 openstack_project_stackhpc:
@@ -38,6 +40,14 @@ openstack_stackhpc_users:
     email: "scott@stackhpc.com"
     password: "placeholder"
     roles: "{{ openstack_user_roles }}"
+
+project_cloud_services:
+  name: "cloud-services"
+  description: "Internal Cloud services"
+  project_domain: default
+  user_domain: default
+  users: []
+  quotas: "{{ openstack_project_quotas }}"
 
 # List of roles to apply to regular users in the openstack demo project.
 openstack_user_roles:
