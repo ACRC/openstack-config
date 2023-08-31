@@ -114,3 +114,7 @@ ansible/collections/**/
 *~
 .*.swp
 .*sw?
+
+# venv
+ansible/openstack-config-image-cache
+ansilbe/openstack-config-venv
