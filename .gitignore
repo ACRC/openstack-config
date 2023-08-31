@@ -109,12 +109,12 @@ ansible/*.retry
 ansible/roles/*\.*/
 # Galaxy collections
 ansible/collections/**/
+# Image cache
+ansible/openstack-config-image-cache
+# Venvs
+ansible/openstack-config-venv
 
 # Editors
 *~
 .*.swp
 .*sw?
-
-# venv
-ansible/openstack-config-image-cache
-ansilbe/openstack-config-venv
