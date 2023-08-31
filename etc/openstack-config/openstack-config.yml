@@ -4,7 +4,89 @@
 
 # List of OpenStack projects. Format is as required by the stackhpc.os-projects
 # role.
-#openstack_projects:
+openstack_projects:
+ - "{{ openstack_project_stackhpc }}"
+# Definition of the openstack demo project. Format is as required by the
+# stackhpc.os-projects role.
+openstack_project_stackhpc:
+  name: "stackhpc"
+  description: "StackHPC demo project"
+  project_domain: "default"
+  user_domain: "default"
+  users: "{{ openstack_stackhpc_users }}"
+  quotas: "{{ openstack_project_quotas }}"
+
+# StackHPC project users and roles
+openstack_stackhpc_users:
+  - name: "stackhpc-dmehmood"
+    description: "Dawud Mehmood (StackHPC)"
+    email: "dawud@stackhpc.com"
+    password: "placeholder"
+    roles: "{{ openstack_user_roles }}"
+  - name: "stackhpc-mcrees"
+    description: "Matt Crees (StackHPC)"
+    email: "mattc@stackhpc.com"
+    password: "placeholder"
+    roles: "{{ openstack_user_roles }}"
+  - name: "stackhpc-stelfer"
+    description: "Stig Telfer (StackHPC)"
+    email: "stig@stackhpc.com"
+    password: "placeholder"
+    roles: "{{ openstack_user_roles }}"
+  - name: "stackhpc-sdavidson"
+    description: "Scott Davidson (StackHPC)"
+    email: "scott@stackhpc.com"
+    password: "placeholder"
+    roles: "{{ openstack_user_roles }}"
+
+# List of roles to apply to regular users in the openstack demo project.
+openstack_user_roles:
+  - member
+  - heat_stack_owner
+  # This allows a user read and write access to octavia APIs.
+  # https://docs.openstack.org/octavia/latest/configuration/policy.html
+  - load-balancer_member
+  # This allows a user read access to Barbican secrets.
+  # https://docs.openstack.org/barbican/latest/admin/access_control.html
+  - observer
+
+# Dict of quotas to set for projects with basic resource quotas
+openstack_project_quotas:
+  backup_gigabytes: -1
+  backups: -1
+  cores: 250
+  fixed_ips: 10
+  floatingip: 10
+  gigabytes: 10000
+  injected_file_size: -1
+  injected_files: -1
+  instances: 20
+  key_pairs: 10
+  per_volume_gigabytes: 500
+  ram: 1000000
+  security_group: 10
+  security_group_rule: 100
+  snapshots: -1
+  volumes: 50
+
+# Dict of quotas to set for projects with unlimited resource quotas
+openstack_unlimited_quotas:
+  backup_gigabytes: -1
+  backups: -1
+  cores: -1
+  fixed_ips: -1
+  floatingip: -1
+  gigabytes: -1
+  injected_file_size: -1
+  injected_files: -1
+  instances: -1
+  key_pairs: -1
+  per_volume_gigabytes: -1
+  ram: -1
+  security_group: -1
+  security_group_rule: -1
+  snapshots: -1
+  volumes: -1
 
 ###############################################################################
 # Configuration of networks, subnets and routers.
