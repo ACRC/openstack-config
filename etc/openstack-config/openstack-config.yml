@@ -458,7 +458,7 @@ vgpu_a100d_2g_20gb:
   ram: 32768
   disk: 30
   vcpus: 8
-  is_public: false
+  is_public: true
   extra_specs:
     hw:cpu_policy: "dedicated"
     hw:cpu_thread_policy: "prefer"
@@ -473,7 +473,7 @@ vgpu_a100d_1g_10gb:
   ram: 16384
   disk: 30
   vcpus: 4
-  is_public: false
+  is_public: true
   extra_specs:
     hw:cpu_policy: "dedicated"
     hw:cpu_thread_policy: "prefer"
@@ -488,7 +488,7 @@ vgpu_a100d_40c:
   ram: 65536
   disk: 30
   vcpus: 16
-  is_public: false
+  is_public: true
   extra_specs:
     hw:cpu_policy: "dedicated"
     hw:cpu_thread_policy: "prefer"
