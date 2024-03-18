@@ -2,6 +2,10 @@
 ###############################################################################
 # Configuration of OpenStack projects and users user environment.
 
+# List of OpenStack domains. Format is as required by the stackhpc.os-projects
+# role.
+#openstack_domains:
+
 # List of OpenStack projects. Format is as required by the stackhpc.os-projects
 # role.
 openstack_projects:
@@ -306,6 +310,10 @@ openstack_secgroup_stackhpc:
   project: "{{ openstack_project_stackhpc.name }}"
   rules: "{{ openstack_secgroup_rules_default }}"
 
+
+# List of RBAC definitions in the openstack projct. Format is as required by the
+# stackhpc.os-networks role.
+#openstack_networks_rbac:
 
 ###############################################################################
 # Configuration of nova flavors.
@@ -851,6 +859,39 @@ openstack_image_git_elements:
 # List of magnum cluster templates. Format is as required by the
 # stackhpc.os-container-clusters role.
 #openstack_container_clusters_templates:
+
+###############################################################################
+# Configuration variables for generating new Magnum cluster template config.
+
+# These variables must be defined before using the generating new cluster
+# templates - see repo README for more details.
+
+# Must have at least 2 CPUs, 4GB RAM and 20GB disk
+# magnum_default_master_flavor_name:
+# magnum_default_worker_flavor_name:
+
+# Network to create tenant cluster FIPs on
+# magnum_external_net_name:
+
+# Provider for cluster loadbalancers (e.g. 'ovn')
+# magnum_loadbalancer_provider:
+
+# Kubernetes CNI to use for cluster templates (defaults to 'calico')
+# Must be one of the options supported by capi-helm-charts, see
+# https://github.com/stackhpc/capi-helm-charts/tree/main/charts/cluster-addons#container-network-interface-cni-plugins
+# magnum_default_network_driver:
+
+# Whether to create a master nodes loadbalancer for cluster templates (defaults to 'True')
+# magnum_master_lb_enabled:
+
+# Whether to add a floating IP to the loadbalancer for cluster templates (defaults to 'True')
+# magnum_cluster_floating_ip_enabled:
+
+# List of nameservers to use for cluster templates
+# magnum_cluster_default_dns_nameservers:
+
+# Whether generated cluster templates should be public by default (defaults to 'True')
+# magnum_cluster_templates_public:
 
 ###############################################################################
 # Dummy variable to allow Ansible to accept this file.
