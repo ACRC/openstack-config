@@ -41,6 +41,11 @@ openstack_stackhpc_users:
     email: "scott@stackhpc.com"
     password: "placeholder"
     roles: "{{ openstack_user_roles }}"
+  - name: "stackhpc-slee"
+    description: "Seunghun Lee (StackHPC)"
+    email: "seunghun@stackhpc.com"
+    password: "placeholder"
+    roles: "{{ openstack_user_roles }}"
 
 project_cloud_services:
   name: "cloud-services"
