@@ -2,31 +2,513 @@
 ###############################################################################
 # Configuration of OpenStack projects and users user environment.
 
+# List of OpenStack domains. Format is as required by the stackhpc.os-projects
+# role.
+#openstack_domains:
+
 # List of OpenStack projects. Format is as required by the stackhpc.os-projects
 # role.
-#openstack_projects:
+openstack_projects:
+  - "{{ openstack_project_stackhpc }}"
+  - "{{ project_cloud_services }}"
+  - "{{ openstack_project_azimuth }}"
+
+# Definition of the openstack demo project. Format is as required by the
+# stackhpc.os-projects role.
+openstack_project_stackhpc:
+  name: "stackhpc"
+  description: "StackHPC demo project"
+  project_domain: "default"
+  user_domain: "default"
+  users: "{{ openstack_stackhpc_users }}"
+  quotas: "{{ openstack_project_quotas }}"
+
+# StackHPC project users and roles
+openstack_stackhpc_users:
+  - name: "stackhpc-dmehmood"
+    description: "Dawud Mehmood (StackHPC)"
+    email: "dawud@stackhpc.com"
+    password: "placeholder"
+    roles: "{{ openstack_user_roles }}"
+  - name: "stackhpc-mcrees"
+    description: "Matt Crees (StackHPC)"
+    email: "mattc@stackhpc.com"
+    password: "placeholder"
+    roles: "{{ openstack_user_roles }}"
+  - name: "stackhpc-stelfer"
+    description: "Stig Telfer (StackHPC)"
+    email: "stig@stackhpc.com"
+    password: "placeholder"
+    roles: "{{ openstack_user_roles }}"
+  - name: "stackhpc-sdavidson"
+    description: "Scott Davidson (StackHPC)"
+    email: "scott@stackhpc.com"
+    password: "placeholder"
+    roles: "{{ openstack_user_roles }}"
+  - name: "stackhpc-slee"
+    description: "Seunghun Lee (StackHPC)"
+    email: "seunghun@stackhpc.com"
+    password: "placeholder"
+    roles: "{{ openstack_user_roles }}"
+
+project_cloud_services:
+  name: "cloud-services"
+  description: "Internal Cloud services"
+  project_domain: default
+  user_domain: default
+  users: []
+  quotas: "{{ openstack_project_quotas }}"
+
+# List of roles to apply to regular users in the openstack demo project.
+openstack_user_roles:
+  - member
+  - heat_stack_owner
+  # This allows a user read and write access to octavia APIs.
+  # https://docs.openstack.org/octavia/latest/configuration/policy.html
+  - load-balancer_member
+  # This allows a user read access to Barbican secrets.
+  # https://docs.openstack.org/barbican/latest/admin/access_control.html
+  - observer
+
+openstack_project_azimuth:
+  name: "azimuth"
+  description: "A project for hosting Azimuth management resources"
+  project_domain: "default"
+  user_domain: "default"
+  users: "{{ openstack_stackhpc_users }}"
+  quotas: "{{ openstack_project_quotas }}"
+
+# Dict of quotas to set for projects with basic resource quotas
+openstack_project_quotas:
+  backup_gigabytes: -1
+  backups: -1
+  cores: 250
+  floatingip: 10
+  gigabytes: 10000
+  injected_file_size: -1
+  injected_files: -1
+  instances: 20
+  key_pairs: 10
+  per_volume_gigabytes: 500
+  ram: 1000000
+  security_group: 10
+  security_group_rule: 100
+  snapshots: -1
+  volumes: 50
+
+# Dict of quotas to set for projects with unlimited resource quotas
+openstack_unlimited_quotas:
+  backup_gigabytes: -1
+  backups: -1
+  cores: -1
+  floatingip: -1
+  gigabytes: -1
+  injected_file_size: -1
+  injected_files: -1
+  instances: -1
+  key_pairs: -1
+  per_volume_gigabytes: -1
+  ram: -1
+  security_group: -1
+  security_group_rule: -1
+  snapshots: -1
+  volumes: -1
 
 ###############################################################################
 # Configuration of networks, subnets and routers.
 
 # List of networks in the openstack system. Format is as required by the
 # stackhpc.os-networks role.
-#openstack_networks:
+openstack_networks:
+  - "{{ openstack_network_external_internet }}"
+  - "{{ openstack_network_external_ceph }}"
+  - "{{ openstack_network_stackhpc }}"
+  - "{{ openstack_network_stackhpc_vlan }}"
+
+openstack_networks_rbac:
+  - "{{ openstack_rbac_external_ceph }}"
+
+#
+# External/Internet network
+# Actually still a private subnet range but intended for outward-facing
+# networking.
+#
+openstack_network_external_internet_name: "external"
+
+openstack_network_external_internet:
+  name: "{{ openstack_network_external_internet_name }}"
+  project: "admin"
+  provider_network_type: "vlan"
+  provider_physical_network: "physnet1"
+  provider_segmentation_id: 2803
+  shared: false
+  external: true
+  # Subnet configuration.
+  subnets:
+    - "{{ openstack_subnet_external_internet }}"
+
+openstack_subnet_external_internet:
+  name: "{{ openstack_network_external_internet_name }}"
+  project: "admin"
+  cidr: "10.129.30.0/23"
+  gateway_ip: "10.129.31.254"
+  allocation_pool_start: "10.129.30.20"
+  allocation_pool_end: "10.129.31.240"
+
+#
+# External/Ceph network
+#
+openstack_network_external_ceph_name: "external-ceph"
+
+# The External/Ceph network is owned by the admin project and shared
+# via RBAC with projects that require direct access to Ceph storage
+# (eg, for Manila CephFS native access).  The network access control
+# is set as "access as shared" for those tenant networks.
+openstack_network_external_ceph:
+  name: "{{ openstack_network_external_ceph_name }}"
+  project: "admin"
+  provider_network_type: "vlan"
+  provider_physical_network: "physnet2"
+  provider_segmentation_id: 8
+  shared: false
+  external: false
+  mtu: 9150
+  # Subnet configuration.
+  subnets:
+    - "{{ openstack_subnet_external_ceph }}"
+
+# There is no route out from this network for VMs
+# Reserve some space at the bottom of the network for Ceph IPs
+openstack_subnet_external_ceph:
+  name: "{{ openstack_network_external_ceph_name }}"
+  project: "admin"
+  cidr: "10.0.0.0/20"
+  allocation_pool_start: "10.0.0.2"
+  allocation_pool_end: "10.0.15.250"
+  host_routes:
+    - destination: "10.129.27.0/25"
+      nexthop: "10.0.15.254"
+
+# The External/Ceph network is shared as an additional tenant
+# VLAN for approved projects requiring high-speed direct access
+# to the Ceph cluster.  Those projects don't get to attach routers
+# or make other changes to the external-ceph network, but can attach
+# VM network ports to the shared network.  VMs from different
+# projects are on the same network but isolated from one another
+# by security groups.
+# Those projects are listed here.
+openstack_rbac_external_ceph:
+  network: "{{ openstack_network_external_ceph_name }}"
+  access: "access_as_shared"
+  projects:
+    - "{{ openstack_project_stackhpc.name }}"
 
 # List of routers in the openstack project. Format is as required by the
 # stackhpc.os-networks role.
-#openstack_routers:
+openstack_routers:
+  - "{{ openstack_router_stackhpc }}"
 
 # List of security groups in the openstack project.
 # Format is as required by the stackhpc.os-networks role.
-#openstack_security_groups:
+openstack_security_groups:
+  - "{{ openstack_secgroup_stackhpc }}"
+  - "{{ secgroup_nvidia_dls }}"
+
+# Default security group rule settings for a project
+openstack_secgroup_rules_default:
+  # Allow ICMP (for ping, etc.).
+  - ethertype: IPv4
+    protocol: icmp
+  # Allow SSH.
+  - ethertype: IPv4
+    protocol: tcp
+    port_range_min: 22
+    port_range_max: 22
+
+secgroup_rules_nvidia_dls:
+  # Allow ICMP (for ping, etc.).
+  - ethertype: IPv4
+    protocol: icmp
+  # Allow SSH.
+  - ethertype: IPv4
+    protocol: tcp
+    port_range_min: 22
+    port_range_max: 22
+  # https://docs.nvidia.com/license-system/latest/nvidia-license-system-user-guide/index.html
+  - ethertype: IPv4
+    protocol: tcp
+    port_range_min: 443
+    port_range_max: 443
+  - ethertype: IPv4
+    protocol: tcp
+    port_range_min: 80
+    port_range_max: 80
+  - ethertype: IPv4
+    protocol: tcp
+    port_range_min: 7070
+    port_range_max: 7070
+
+secgroup_nvidia_dls:
+  name: nvidia-dls
+  project: "{{ project_cloud_services.name }}"
+  rules: "{{ secgroup_rules_nvidia_dls }}"
+
+################################################################################
+# Networks for stackhpc
+#
+openstack_network_stackhpc:
+  name: "{{ openstack_project_stackhpc.name }}"
+  project: "{{ openstack_project_stackhpc.name }}"
+  shared: false
+  external: false
+  # Subnet configuration.
+  subnets:
+    - "{{ openstack_subnet_stackhpc }}"
+
+openstack_subnet_stackhpc:
+  name: "{{ openstack_project_stackhpc.name }}"
+  project: "{{ openstack_project_stackhpc.name }}"
+  cidr: "192.168.0.0/24"
+  gateway_ip: "192.168.0.1"
+  allocation_pool_start: "192.168.0.10"
+  allocation_pool_end: "192.168.0.250"
+
+openstack_network_stackhpc_vlan:
+  name: "{{ openstack_project_stackhpc.name }}-vlan"
+  project: "{{ openstack_project_stackhpc.name }}"
+  shared: false
+  external: false
+  provider_network_type: "vlan"
+  provider_physical_network: "physnet2"
+  # This may be required for RDMA traffic
+  port_security_enabled: false
+  mtu: 9000
+  # Subnet configuration.
+  subnets:
+    - "{{ openstack_subnet_stackhpc_vlan }}"
+
+openstack_subnet_stackhpc_vlan:
+  name: "{{ openstack_project_stackhpc.name }}-vlan"
+  project: "{{ openstack_project_stackhpc.name }}"
+  cidr: "192.168.1.0/24"
+  gateway_ip: "192.168.1.1"
+  allocation_pool_start: "192.168.1.10"
+  allocation_pool_end: "192.168.1.250"
+
+openstack_router_stackhpc:
+  name: "{{ openstack_project_stackhpc.name }}"
+  project: "{{ openstack_project_stackhpc.name }}"
+  interfaces:
+    - "{{ openstack_network_stackhpc.name }}"
+    - "{{ openstack_network_stackhpc_vlan.name }}"
+  network: "{{ openstack_network_external_internet.name }}"
+
+openstack_secgroup_stackhpc:
+  name: default
+  project: "{{ openstack_project_stackhpc.name }}"
+  rules: "{{ openstack_secgroup_rules_default }}"
+
+
+# List of RBAC definitions in the openstack projct. Format is as required by the
+# stackhpc.os-networks role.
+#openstack_networks_rbac:
 
 ###############################################################################
 # Configuration of nova flavors.
 
 # List of nova flavors in the openstack project. Format is as required by the
 # stackhpc.os-flavors role.
-#openstack_flavors:
+openstack_flavors:
+#  - "{{ openstack_flavor_godzilla }}"
+  - "{{ vgpu_a100d_2g_20gb }}"
+  - "{{ vgpu_a100d_1g_10gb }}"
+  - "{{ vgpu_a100d_40c }}"
+  - "{{ hpc_v1_8cpu }}"
+  - "{{ hpc_v1_16cpu }}"
+  - "{{ hpc_v1_32cpu }}"
+  - "{{ hpc_v1_48cpu }}"
+  - "{{ hpc_v1_64cpu }}"
+  - "{{ hpc_v1_80cpu }}"
+  - "{{ hpc_v1_96cpu }}"
+
+# openstack_flavor_godzilla:
+#   name: "godzilla"
+#   ram: 393216
+#   disk: 50
+#   vcpus: 96
+#   is_public: true
+#   extra_specs:
+#     hw:cpu_policy: "dedicated"
+#     hw:cpu_thread_policy: "prefer"
+#     hw:cpu_threads: 2
+#     hw:mem_page_size: "1GB"
+#     hw:cpu_sockets: 2
+#     hw:numa_nodes: 8
+#     hw:pci_numa_affinity_policy: preferred
+#     hw_rng:allowed: "True"
+
+# HPC v1:
+# Core-pinned VCPUs
+# 4GB RAM per VCPU
+# Spread across NUMA regions (but in thread sibling pairs)
+#
+hpc_v1_8cpu:
+  name: "hpc.v1.8cpu"
+  ram: 32768
+  disk: 30
+  vcpus: 8
+  is_public: false
+  extra_specs:
+    hw:cpu_policy: "dedicated"
+    hw:cpu_thread_policy: "prefer"
+    hw:cpu_threads: 2
+    hw:mem_page_size: "1GB"
+    hw:cpu_sockets: 2
+    hw:numa_nodes: 8
+    hw:pci_numa_affinity_policy: preferred
+    hw_rng:allowed: "True"
+
+hpc_v1_16cpu:
+  name: "hpc.v1.16cpu"
+  ram: 65536
+  disk: 30
+  vcpus: 16
+  is_public: false
+  extra_specs:
+    hw:cpu_policy: "dedicated"
+    hw:cpu_thread_policy: "prefer"
+    hw:cpu_threads: 2
+    hw:mem_page_size: "1GB"
+    hw:cpu_sockets: 2
+    hw:numa_nodes: 8
+    hw:pci_numa_affinity_policy: preferred
+    hw_rng:allowed: "True"
+
+hpc_v1_32cpu:
+  name: "hpc.v1.32cpu"
+  ram: 131072
+  disk: 30
+  vcpus: 32
+  is_public: false
+  extra_specs:
+    hw:cpu_policy: "dedicated"
+    hw:cpu_thread_policy: "prefer"
+    hw:cpu_threads: 2
+    hw:mem_page_size: "1GB"
+    hw:cpu_sockets: 2
+    hw:numa_nodes: 8
+    hw:pci_numa_affinity_policy: preferred
+    hw_rng:allowed: "True"
+
+hpc_v1_48cpu:
+  name: "hpc.v1.48cpu"
+  ram: 196608
+  disk: 30
+  vcpus: 48
+  is_public: false
+  extra_specs:
+    hw:cpu_policy: "dedicated"
+    hw:cpu_thread_policy: "prefer"
+    hw:cpu_threads: 2
+    hw:mem_page_size: "1GB"
+    hw:cpu_sockets: 2
+    hw:numa_nodes: 8
+    hw:pci_numa_affinity_policy: preferred
+    hw_rng:allowed: "True"
+
+hpc_v1_64cpu:
+  name: "hpc.v1.64cpu"
+  ram: 262144
+  disk: 30
+  vcpus: 64
+  is_public: false
+  extra_specs:
+    hw:cpu_policy: "dedicated"
+    hw:cpu_thread_policy: "prefer"
+    hw:cpu_threads: 2
+    hw:mem_page_size: "1GB"
+    hw:cpu_sockets: 2
+    hw:numa_nodes: 8
+    hw:pci_numa_affinity_policy: preferred
+    hw_rng:allowed: "True"
+
+hpc_v1_80cpu:
+  name: "hpc.v1.80cpu"
+  ram: 327680
+  disk: 30
+  vcpus: 80
+  is_public: false
+  extra_specs:
+    hw:cpu_policy: "dedicated"
+    hw:cpu_thread_policy: "prefer"
+    hw:cpu_threads: 2
+    hw:mem_page_size: "1GB"
+    hw:cpu_sockets: 2
+    hw:numa_nodes: 8
+    hw:pci_numa_affinity_policy: preferred
+    hw_rng:allowed: "True"
+
+hpc_v1_96cpu:
+  name: "hpc.v1.96cpu"
+  ram: 393216
+  disk: 30
+  vcpus: 96
+  is_public: false
+  extra_specs:
+    hw:cpu_policy: "dedicated"
+    hw:cpu_thread_policy: "prefer"
+    hw:cpu_threads: 2
+    hw:mem_page_size: "1GB"
+    hw:cpu_sockets: 2
+    hw:numa_nodes: 8
+    hw:pci_numa_affinity_policy: preferred
+    hw_rng:allowed: "True"
+
+vgpu_a100d_2g_20gb:
+  name: "vgpu.a100d.2g.20gb"
+  ram: 32768
+  disk: 30
+  vcpus: 8
+  is_public: true
+  extra_specs:
+    hw:cpu_policy: "dedicated"
+    hw:cpu_thread_policy: "prefer"
+    hw:mem_page_size: "1GB"
+    hw:cpu_sockets: 2
+    hw:numa_nodes: 4
+    hw_rng:allowed: "True"
+    resources:CUSTOM_NVIDIA_700: "1"
+
+vgpu_a100d_1g_10gb:
+  name: "vgpu.a100d.1g.10gb"
+  ram: 16384
+  disk: 30
+  vcpus: 4
+  is_public: true
+  extra_specs:
+    hw:cpu_policy: "dedicated"
+    hw:cpu_thread_policy: "prefer"
+    hw:mem_page_size: "1GB"
+    hw:cpu_sockets: 2
+    hw:numa_nodes: 2
+    hw_rng:allowed: "True"
+    resources:CUSTOM_NVIDIA_699: "1"
+
+vgpu_a100d_40c:
+  name: "vgpu.a100d.40c"
+  ram: 65536
+  disk: 30
+  vcpus: 16
+  is_public: true
+  extra_specs:
+    hw:cpu_policy: "dedicated"
+    hw:cpu_thread_policy: "prefer"
+    hw:mem_page_size: "1GB"
+    hw:cpu_sockets: 2
+    hw:numa_nodes: 8
+    hw_rng:allowed: "True"
+    resources:CUSTOM_NVIDIA_697: "1"
+
 
 ###############################################################################
 # Configuration of nova host aggregates.
@@ -39,7 +521,328 @@
 # Configuration of Glance software images.
 
 # List of Glance images. Format is as required by the stackhpc.os-images role.
-#openstack_images:
+# List of additional host packages.
+os_images_package_dependencies_extra:
+  # debootstrap is required to build ubuntu-minimal images.
+  - debootstrap
+
+# Drop cloud-init and stable-interface-names from default elements.
+os_images_common: enable-serial-console
+
+# Set this to true to force rebuilding images.
+os_images_force_rebuild: false
+
+# List of Glance images. Format is as required by the stackhpc.os-images role.
+openstack_images:
+  - "{{ openstack_image_rocky88 }}"
+  - "{{ openstack_image_rocky88_ofed2304 }}"
+  - "{{ openstack_image_rocky88_ofed2304_dev }}"
+  - "{{ openstack_image_rocky92 }}"
+  - "{{ openstack_image_ubuntu_jammy }}"
+  - "{{ image_rocky9_nvidia }}"
+
+# Rocky Linux 8.8 built using a custom containerfile
+openstack_image_rocky88:
+  name: "Rocky-8.8"
+  type: "raw"
+  elements:
+    - "rocky-container"
+    - "cloud-init"
+    - "cloud-init-growpart"
+    - "epel"
+    - "selinux-permissive"
+    - "dhcp-all-interfaces"
+    - "vm"
+    - "grub2"
+    - "openssh-server"
+    - "block-device-efi"
+    - "dracut-regenerate"
+  is_public: True
+  packages:
+    - "gdisk"
+    - "efibootmgr"
+    - "efivar"
+    - "bash-completion"
+    - "git"
+    - "linux-firmware"
+    - "logrotate"
+    - "lshw"
+    - "man-db"
+    - "net-tools"
+    - "nmon"
+    - "pciutils"
+    - "tmux"
+    - "vim-enhanced"
+    - "NetworkManager-initscripts-updown"
+    - "dracut"
+    - "dracut-network"
+  env:
+    DIB_CONTAINERFILE_NETWORK_DRIVER: host
+    DIB_CONTAINERFILE_RUNTIME: docker
+    DIB_CONTAINERFILE_DOCKERFILE: "{{ playbook_dir }}/../containerfiles/rocky-8.8"
+    DIB_CLOUD_INIT_GROWPART_DEVICES:
+      - /
+    YUM: dnf
+    DIB_RELEASE: "8.8"
+    DIB_DRACUT_ENABLED_MODULES:
+      - name: lvm
+        packages:
+          - lvm2
+      - name: kernel-modules
+      - name: kernel-network-modules
+  properties:
+    os_type: "linux"
+    os_distro: "rocky"
+    os_version: "8.8"
+    hw_vif_multiqueue_enabled: true
+    hw_scsi_model: "virtio-scsi"
+    hw_disk_bus: "scsi"
+
+# Rocky 8.8 built with Mellanox OFED 23.04
+openstack_image_rocky88_ofed2304:
+  name: "Rocky-8.8-OFED-23.04"
+  type: "raw"
+  elements:
+    - "rocky-container"
+    - "cloud-init"
+    - "cloud-init-growpart"
+    - "epel"
+    - "selinux-permissive"
+    - "dhcp-all-interfaces"
+    - "vm"
+    - "grub2"
+    - "openssh-server"
+    - "block-device-efi"
+    - "dracut-regenerate"
+  is_public: False
+  packages:
+    - "gdisk"
+    - "efibootmgr"
+    - "efivar"
+    - "bash-completion"
+    - "git"
+    - "linux-firmware"
+    - "logrotate"
+    - "lshw"
+    - "man-db"
+    - "net-tools"
+    - "nmon"
+    - "pciutils"
+    - "tmux"
+    - "vim-enhanced"
+    - "NetworkManager-initscripts-updown"
+    - "dracut"
+    - "dracut-network"
+  env:
+    DIB_CONTAINERFILE_NETWORK_DRIVER: host
+    DIB_CONTAINERFILE_RUNTIME: docker
+    DIB_CONTAINERFILE_DOCKERFILE: "{{ playbook_dir }}/../containerfiles/rocky-8.8-ofed-23.04"
+    DIB_CLOUD_INIT_GROWPART_DEVICES:
+      - /
+    YUM: dnf
+    DIB_RELEASE: "8.8"
+    DIB_DRACUT_ENABLED_MODULES:
+      - name: lvm
+        packages:
+          - lvm2
+      - name: kernel-modules
+      - name: kernel-network-modules
+  properties:
+    os_type: "linux"
+    os_distro: "rocky"
+    os_version: "8.8"
+    hw_vif_multiqueue_enabled: true
+    hw_scsi_model: "virtio-scsi"
+    hw_disk_bus: "scsi"
+
+# Rocky 8.8 built with Mellanox OFED 23.04 + devuser
+openstack_image_rocky88_ofed2304_dev:
+  name: "Rocky-8.8-OFED-23.04-dev"
+  type: "raw"
+  elements:
+    - "rocky-container"
+    - "cloud-init"
+    - "cloud-init-growpart"
+    - "epel"
+    - "selinux-permissive"
+    - "dhcp-all-interfaces"
+    - "vm"
+    - "grub2"
+    - "openssh-server"
+    - "block-device-efi"
+    - "dracut-regenerate"
+    - "devuser"
+  is_public: False
+  packages:
+    - "gdisk"
+    - "efibootmgr"
+    - "efivar"
+    - "bash-completion"
+    - "git"
+    - "linux-firmware"
+    - "logrotate"
+    - "lshw"
+    - "man-db"
+    - "net-tools"
+    - "nmon"
+    - "pciutils"
+    - "tmux"
+    - "vim-enhanced"
+    - "NetworkManager-initscripts-updown"
+    - "dracut"
+    - "dracut-network"
+  env:
+    DIB_DEV_USER_USERNAME: "devuser"
+    DIB_DEV_USER_PASSWORD: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          36346461356139626536656561353063623964356566303264383031653034633566386161333738
+          3831343166353132363332623232376463306138323038330a663231663833393132653965316534
+          36393032656138303632336231383437313532653335393038626132646635353664396233393037
+          3537396337623037370a393739396535316539663061623363376330636466333635646233306664
+          64623262396365373437356235346630613732666537623464663862653463333362
+    DIB_DEV_USER_PWDLESS_SUDO: "yes"
+    DIB_CONTAINERFILE_NETWORK_DRIVER: host
+    DIB_CONTAINERFILE_RUNTIME: docker
+    DIB_CONTAINERFILE_DOCKERFILE: "{{ playbook_dir }}/../containerfiles/rocky-8.8-ofed-23.04"
+    DIB_CLOUD_INIT_GROWPART_DEVICES:
+      - /
+    YUM: dnf
+    DIB_RELEASE: "8.8"
+    DIB_DRACUT_ENABLED_MODULES:
+      - name: lvm
+        packages:
+          - lvm2
+      - name: kernel-modules
+      - name: kernel-network-modules
+  properties:
+    os_type: "linux"
+    os_distro: "rocky"
+    os_version: "8.8"
+    hw_vif_multiqueue_enabled: true
+    hw_scsi_model: "virtio-scsi"
+    hw_disk_bus: "scsi"
+
+# Rocky Linux 9.2 built from custom containerfile
+openstack_image_rocky92:
+  name: "Rocky-9.2"
+  type: "raw"
+  elements:
+    - "rocky-container"
+    - "cloud-init"
+    - "cloud-init-growpart"
+    - "selinux-permissive"
+    - "vm"
+    - "grub2"
+    - "openssh-server"
+  is_public: True
+  packages:
+    - "git"
+    - "tmux"
+    - "vim-enhanced"
+  env:
+    DIB_CONTAINERFILE_NETWORK_DRIVER: host
+    DIB_CONTAINERFILE_RUNTIME: docker
+    DIB_CONTAINERFILE_DOCKERFILE: "{{ playbook_dir }}/../containerfiles/rocky-9.2"
+    YUM: dnf
+    DIB_CLOUD_INIT_GROWPART_DEVICES:
+      - "/"
+    DIB_RELEASE: "9.2"
+  properties:
+    os_type: "linux"
+    os_distro: "rocky"
+    os_version: "9.2"
+    hw_vif_multiqueue_enabled: true
+    hw_scsi_model: "virtio-scsi"
+    hw_disk_bus: "scsi"
+
+# Ubuntu Jammy 22.04
+openstack_image_ubuntu_jammy:
+  name: "Ubuntu-22.04"
+  type: "raw"
+  is_public: True
+  elements:
+    - "cloud-init"
+    - "grub2"
+    - "openssh-server"
+    - "ubuntu-minimal"
+    - "vm"
+    - "dhcp-all-interfaces"
+  packages:
+    - "bash-completion"
+    - "git"
+    - "less"
+    - "logrotate"
+    - "lshw"
+    - "man-db"
+    - "net-tools"
+    - "nmon"
+    - "pciutils"
+    - "tmux"
+    - "iputils-ping"
+    - "netbase"
+    - "apt-utils"
+    - "curl"
+    - "debootstrap"
+    - "vim"
+  properties:
+    os_type: "linux"
+    os_distro: "ubuntu"
+    os_version: "jammy"
+    hw_rng_model: "virtio"
+    hw_vif_multiqueue_enabled: true
+    hw_scsi_model: "virtio-scsi"
+    hw_disk_bus: "scsi"
+  env:
+    DIB_RELEASE: "jammy"
+
+image_rocky9_nvidia:
+  name: "Rocky9-NVIDIA"
+  type: raw
+  elements:
+    - "rocky-container"
+    - "rpm"
+    - "nvidia-vgpu"
+    - "cloud-init"
+    - "epel"
+    - "cloud-init-growpart"
+    - "selinux-permissive"
+    - "dhcp-all-interfaces"
+    - "vm"
+    - "extra-repos"
+    - "grub2"
+    - "stable-interface-names"
+    - "openssh-server"
+  is_public: True
+  packages:
+    - "dkms"
+    - "git"
+    - "tmux"
+    - "cuda-minimal-build-12-1"
+    - "cuda-demo-suite-12-1"
+    - "cuda-libraries-12-1"
+    - "cuda-toolkit"
+    - "vim-enhanced"
+  env:
+    DIB_CONTAINERFILE_NETWORK_DRIVER: host
+    DIB_CONTAINERFILE_RUNTIME: docker
+    DIB_RPMS: "http://10.129.28.41:80/pulp/content/nvidia/nvidia-linux-grid-525-525.125.06-1.x86_64.rpm"
+    YUM: dnf
+    DIB_EXTRA_REPOS: "https://developer.download.nvidia.com/compute/cuda/repos/rhel9/x86_64/cuda-rhel9.repo"
+    DIB_NVIDIA_VGPU_CLIENT_TOKEN: "{{ lookup('file' , 'secrets/nvidia-client-token.tok') }}"
+    DIB_CLOUD_INIT_GROWPART_DEVICES:
+      - "/"
+    DIB_RELEASE: "9"
+  properties:
+    os_type: "linux"
+    os_distro: "rocky"
+    os_version: "9"
+
+openstack_image_git_elements:
+  - repo: "https://github.com/stackhpc/stackhpc-image-elements"
+    local: "{{ playbook_dir }}/stackhpc-image-elements"
+    version: master
+    elements_path: elements
+
 
 # List of Diskimage Builder (DIB) elements paths to include in image builds.
 #openstack_image_elements:
@@ -54,6 +857,39 @@
 # List of magnum cluster templates. Format is as required by the
 # stackhpc.os-container-clusters role.
 #openstack_container_clusters_templates:
+
+###############################################################################
+# Configuration variables for generating new Magnum cluster template config.
+
+# These variables must be defined before using the generating new cluster
+# templates - see repo README for more details.
+
+# Must have at least 2 CPUs, 4GB RAM and 20GB disk
+# magnum_default_master_flavor_name:
+# magnum_default_worker_flavor_name:
+
+# Network to create tenant cluster FIPs on
+# magnum_external_net_name:
+
+# Provider for cluster loadbalancers (e.g. 'ovn')
+# magnum_loadbalancer_provider:
+
+# Kubernetes CNI to use for cluster templates (defaults to 'calico')
+# Must be one of the options supported by capi-helm-charts, see
+# https://github.com/stackhpc/capi-helm-charts/tree/main/charts/cluster-addons#container-network-interface-cni-plugins
+# magnum_default_network_driver:
+
+# Whether to create a master nodes loadbalancer for cluster templates (defaults to 'True')
+# magnum_master_lb_enabled:
+
+# Whether to add a floating IP to the loadbalancer for cluster templates (defaults to 'True')
+# magnum_cluster_floating_ip_enabled:
+
+# List of nameservers to use for cluster templates
+# magnum_cluster_default_dns_nameservers:
+
+# Whether generated cluster templates should be public by default (defaults to 'True')
+# magnum_cluster_templates_public:
 
 ###############################################################################
 # Dummy variable to allow Ansible to accept this file.
