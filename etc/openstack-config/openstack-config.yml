@@ -146,6 +146,7 @@ openstack_network_external_internet:
   # Subnet configuration.
   subnets:
     - "{{ openstack_subnet_external_internet }}"
+    - "{{ openstack_subnet_external_internet2 }}"
 
 openstack_subnet_external_internet:
   name: "{{ openstack_network_external_internet_name }}"
@@ -153,7 +154,15 @@ openstack_subnet_external_internet:
   cidr: "10.129.30.0/23"
   gateway_ip: "10.129.31.254"
   allocation_pool_start: "10.129.30.20"
-  allocation_pool_end: "10.129.31.240"
+  allocation_pool_end: "10.129.31.250"
+
+openstack_subnet_external_internet2:
+  name: "{{ openstack_network_external_internet_name }}2"
+  project: "admin"
+  cidr: "10.129.29.0/24"
+  gateway_ip: "10.129.29.254"
+  allocation_pool_start: "10.129.29.20"
+  allocation_pool_end: "10.129.29.250"
 
 #
 # External/Ceph network
