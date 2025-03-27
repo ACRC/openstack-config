@@ -319,57 +319,20 @@ openstack_secgroup_stackhpc:
 # List of nova flavors in the openstack project. Format is as required by the
 # stackhpc.os-flavors role.
 openstack_flavors:
-#  - "{{ openstack_flavor_godzilla }}"
-  - "{{ vgpu_a100d_2g_20gb }}"
-  - "{{ vgpu_a100d_1g_10gb }}"
-  - "{{ vgpu_a100d_40c }}"
-  - "{{ hpc_v1_8cpu }}"
-  - "{{ hpc_v1_16cpu }}"
-  - "{{ hpc_v1_32cpu }}"
-  - "{{ hpc_v1_48cpu }}"
-  - "{{ hpc_v1_64cpu }}"
-  - "{{ hpc_v1_80cpu }}"
-  - "{{ hpc_v1_96cpu }}"
+  - "{{ hpc_v2_16cpu_64ram }}"
+  - "{{ hpc_v2_32cpu_128ram }}"
+  - "{{ hpc_v2_60cpu_480ram }}"
+  - "{{ hpc_v2_8cpu_64ram }}"
+  - "{{ hpc_v2_16cpu_128ram }}"
+  - "{{ hpc_v2_16cpu_128ram_a100 }}"
 
-# openstack_flavor_godzilla:
-#   name: "godzilla"
-#   ram: 393216
-#   disk: 50
-#   vcpus: 96
-#   is_public: true
-#   extra_specs:
-#     hw:cpu_policy: "dedicated"
-#     hw:cpu_thread_policy: "prefer"
-#     hw:cpu_threads: 2
-#     hw:mem_page_size: "1GB"
-#     hw:cpu_sockets: 2
-#     hw:numa_nodes: 8
-#     hw:pci_numa_affinity_policy: preferred
-#     hw_rng:allowed: "True"
-
-# HPC v1:
+# HPC v2:
 # Core-pinned VCPUs
 # 4GB RAM per VCPU
 # Spread across NUMA regions (but in thread sibling pairs)
-#
-hpc_v1_8cpu:
-  name: "hpc.v1.8cpu"
-  ram: 32768
-  disk: 30
-  vcpus: 8
-  is_public: false
-  extra_specs:
-    hw:cpu_policy: "dedicated"
-    hw:cpu_thread_policy: "prefer"
-    hw:cpu_threads: 2
-    hw:mem_page_size: "1GB"
-    hw:cpu_sockets: 2
-    hw:numa_nodes: 8
-    hw:pci_numa_affinity_policy: preferred
-    hw_rng:allowed: "True"
-
-hpc_v1_16cpu:
-  name: "hpc.v1.16cpu"
+# Slurm login node
+hpc_v2_16cpu_64ram:
+  name: "hpc.v2.16cpu.64ram"
   ram: 65536
   disk: 30
   vcpus: 16
@@ -383,9 +346,16 @@ hpc_v1_16cpu:
     hw:numa_nodes: 8
     hw:pci_numa_affinity_policy: preferred
     hw_rng:allowed: "True"
+    trait:CUSTOM_COMPUTE_STANDARD: "required"
+    resources:CUSTOM_COMPUTE_STANDARD: 1
 
-hpc_v1_32cpu:
-  name: "hpc.v1.32cpu"
+# HPC v2:
+# Core-pinned VCPUs
+# 4GB RAM per VCPU
+# Spread across NUMA regions (but in thread sibling pairs)
+# Slurm standard compute node
+hpc_v2_32cpu_128ram:
+  name: "hpc.v2.32cpu.128ram"
   ram: 131072
   disk: 30
   vcpus: 32
@@ -399,116 +369,94 @@ hpc_v1_32cpu:
     hw:numa_nodes: 8
     hw:pci_numa_affinity_policy: preferred
     hw_rng:allowed: "True"
+    trait:CUSTOM_COMPUTE_STANDARD: "required"
+    resources:CUSTOM_COMPUTE_STANDARD: 2
 
-hpc_v1_48cpu:
-  name: "hpc.v1.48cpu"
-  ram: 196608
+# HPC v2:
+# Core-pinned VCPUs
+# 8GB RAM per VCPU
+# Spread across NUMA regions
+# Slurm highmem compute node
+hpc_v2_60cpu_480ram:
+  name: "hpc.v2.60cpu.480ram"
+  ram: 491520
   disk: 30
-  vcpus: 48
+  vcpus: 60
   is_public: false
   extra_specs:
     hw:cpu_policy: "dedicated"
-    hw:cpu_thread_policy: "prefer"
-    hw:cpu_threads: 2
+    hw:cpu_thread_policy: "isolate"
     hw:mem_page_size: "1GB"
     hw:cpu_sockets: 2
-    hw:numa_nodes: 8
+    hw:numa_nodes: 4
     hw:pci_numa_affinity_policy: preferred
     hw_rng:allowed: "True"
+    trait:CUSTOM_COMPUTE_HIGHMEM: "required"
+    resources:CUSTOM_COMPUTE_HIGHMEM: 1
 
-hpc_v1_64cpu:
-  name: "hpc.v1.64cpu"
-  ram: 262144
-  disk: 30
-  vcpus: 64
-  is_public: false
-  extra_specs:
-    hw:cpu_policy: "dedicated"
-    hw:cpu_thread_policy: "prefer"
-    hw:cpu_threads: 2
-    hw:mem_page_size: "1GB"
-    hw:cpu_sockets: 2
-    hw:numa_nodes: 8
-    hw:pci_numa_affinity_policy: preferred
-    hw_rng:allowed: "True"
-
-hpc_v1_80cpu:
-  name: "hpc.v1.80cpu"
-  ram: 327680
-  disk: 30
-  vcpus: 80
-  is_public: false
-  extra_specs:
-    hw:cpu_policy: "dedicated"
-    hw:cpu_thread_policy: "prefer"
-    hw:cpu_threads: 2
-    hw:mem_page_size: "1GB"
-    hw:cpu_sockets: 2
-    hw:numa_nodes: 8
-    hw:pci_numa_affinity_policy: preferred
-    hw_rng:allowed: "True"
-
-hpc_v1_96cpu:
-  name: "hpc.v1.96cpu"
-  ram: 393216
-  disk: 30
-  vcpus: 96
-  is_public: false
-  extra_specs:
-    hw:cpu_policy: "dedicated"
-    hw:cpu_thread_policy: "prefer"
-    hw:cpu_threads: 2
-    hw:mem_page_size: "1GB"
-    hw:cpu_sockets: 2
-    hw:numa_nodes: 8
-    hw:pci_numa_affinity_policy: preferred
-    hw_rng:allowed: "True"
-
-vgpu_a100d_2g_20gb:
-  name: "vgpu.a100d.2g.20gb"
-  ram: 32768
+# HPC v2:
+# Core-pinned VCPUs
+# 8GB RAM per VCPU
+# Spread across NUMA regions
+# General purpose small
+hpc_v2_8cpu_64ram:
+  name: "hpc.v2.8cpu.64ram"
+  ram: 65536
   disk: 30
   vcpus: 8
   is_public: true
   extra_specs:
     hw:cpu_policy: "dedicated"
-    hw:cpu_thread_policy: "prefer"
     hw:mem_page_size: "1GB"
     hw:cpu_sockets: 2
-    hw:numa_nodes: 4
+    hw:numa_nodes: 8
+    hw:pci_numa_affinity_policy: preferred
     hw_rng:allowed: "True"
-    resources:CUSTOM_NVIDIA_700: "1"
+    trait:CUSTOM_COMPUTE_AUXILIARY: "required"
+    resources:CUSTOM_COMPUTE_AUXILIARY: 1
 
-vgpu_a100d_1g_10gb:
-  name: "vgpu.a100d.1g.10gb"
-  ram: 16384
-  disk: 30
-  vcpus: 4
-  is_public: true
-  extra_specs:
-    hw:cpu_policy: "dedicated"
-    hw:cpu_thread_policy: "prefer"
-    hw:mem_page_size: "1GB"
-    hw:cpu_sockets: 2
-    hw:numa_nodes: 2
-    hw_rng:allowed: "True"
-    resources:CUSTOM_NVIDIA_699: "1"
-
-vgpu_a100d_40c:
-  name: "vgpu.a100d.40c"
-  ram: 65536
+# HPC v2:
+# Core-pinned VCPUs
+# 8GB RAM per VCPU
+# Spread across NUMA regions
+# General purpose large
+hpc_v2_16cpu_128ram:
+  name: "hpc.v2.16cpu.128ram"
+  ram: 131072
   disk: 30
   vcpus: 16
   is_public: true
   extra_specs:
     hw:cpu_policy: "dedicated"
-    hw:cpu_thread_policy: "prefer"
     hw:mem_page_size: "1GB"
     hw:cpu_sockets: 2
     hw:numa_nodes: 8
+    hw:pci_numa_affinity_policy: preferred
     hw_rng:allowed: "True"
-    resources:CUSTOM_NVIDIA_697: "1"
+    trait:CUSTOM_COMPUTE_AUXILIARY: "required"
+    resources:CUSTOM_COMPUTE_AUXILIARY: 2
 
+# HPC v2:
+# Core-pinned VCPUs
+# 8GB RAM per VCPU
+# Spread across NUMA regions
+# GPU A100
+hpc_v2_16cpu_128ram_a100:
+  name: "hpc.v2.16cpu.128ram.a100"
+  ram: 131072
+  disk: 30
+  vcpus: 16
+  is_public: false
+  extra_specs:
+    hw:cpu_policy: "dedicated"
+    hw:mem_page_size: "1GB"
+    hw:cpu_sockets: 2
+    hw:numa_nodes: 8
+    hw:pci_numa_affinity_policy: preferred
+    hw_rng:allowed: "True"
+    pci_passthrough:alias: "a100:1"
+    trait:CUSTOM_COMPUTE_GPU_A100: "required"
+    resources:CUSTOM_COMPUTE_GPU_A100: 1
 
 ###############################################################################
 # Configuration of nova host aggregates.
