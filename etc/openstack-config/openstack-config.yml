@@ -448,7 +448,7 @@ openstack_secgroup_stackhpc:
 openstack_flavors:
   - "{{ hpc_v2_16cpu_64ram }}"
   - "{{ hpc_v2_32cpu_128ram }}"
-  - "{{ hpc_v2_60cpu_480ram }}"
+  - "{{ hpc_v2_56cpu_448ram }}"
   - "{{ hpc_v2_8cpu_64ram }}"
   - "{{ hpc_v2_16cpu_128ram }}"
   - "{{ hpc_v2_16cpu_128ram_a100 }}"
@@ -504,18 +504,17 @@ hpc_v2_32cpu_128ram:
 # 8GB RAM per VCPU
 # Spread across NUMA regions
 # Slurm highmem compute node
-hpc_v2_60cpu_480ram:
-  name: "hpc.v2.60cpu.480ram"
-  ram: 491520
+hpc_v2_56cpu_448ram:
+  name: "hpc.v2.56cpu.448ram"
+  ram: 458752
   disk: 30
-  vcpus: 60
+  vcpus: 56
   is_public: false
   extra_specs:
     hw:cpu_policy: "dedicated"
-    hw:cpu_thread_policy: "isolate"
     hw:mem_page_size: "1GB"
     hw:cpu_sockets: 2
-    hw:numa_nodes: 4
+    hw:numa_nodes: 8
     hw:pci_numa_affinity_policy: preferred
     hw_rng:allowed: "True"
     trait:CUSTOM_COMPUTE_HIGHMEM: "required"
