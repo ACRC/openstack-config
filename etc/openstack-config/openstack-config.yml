@@ -136,6 +136,21 @@ openstack_unlimited_quotas:
   volumes: -1
 
 ###############################################################################
+# Configuration of volume types.
+
+# List of volume types in the openstack system. Format is ad required by
+# the stackhpc.openstack.os_volumes role.
+openstack_volumes_types:
+  - name: capacity
+    public: true
+    extra_specs:
+      volume_backend_name: 'capacity'
+  - name: iops
+    public: true
+    extra_specs:
+      volume_backend_name: 'iops'
+
+###############################################################################
 # Configuration of networks, subnets and routers.
 
 # List of networks in the openstack system. Format is as required by the
