@@ -589,7 +589,75 @@ hpc_v2_16cpu_128ram_a100:
 
 # List of nova host aggregates. Format is as required by the
 # stackhpc.os_host_aggregates role.
-#openstack_host_aggregates:
+openstack_host_aggregates:
+  - "{{ openstack_aggregate_rack_5 }}"
+  - "{{ openstack_aggregate_rack_6 }}"
+  - "{{ openstack_aggregate_rack_11 }}"
+  - "{{ openstack_aggregate_rack_12 }}"
+
+openstack_aggregate_rack_5:
+  name: "DL-Rack-5"
+  hosts:
+    - "compute1"
+    - "compute2"
+    - "compute3"
+    - "compute4"
+    - "compute5"
+    - "compute6"
+    - "compute7"
+    - "compute8"
+    - "gpu1"
+    - "gpu2"
+  metadata:
+    availability_zone: "DL-Rack-5"
+
+openstack_aggregate_rack_6:
+  name: "DL-Rack-6"
+  hosts:
+    - "compute9"
+    - "compute10"
+    - "compute11"
+    - "compute12"
+    - "compute13"
+    - "compute14"
+    - "compute15"
+    - "compute16"
+    - "compute17"
+    - "compute18"
+  metadata:
+    availability_zone: "DL-Rack-6"
+
+openstack_aggregate_rack_11:
+  name: "DL-Rack-11"
+  hosts:
+    - "compute19"
+    - "compute20"
+    - "compute21"
+    - "compute22"
+    - "compute23"
+    - "compute24"
+    - "compute25"
+    - "compute26"
+    - "compute27"
+    - "compute28"
+  metadata:
+    availability_zone: "DL-Rack-11"
+
+openstack_aggregate_rack_12:
+  name: "DL-Rack-12"
+  hosts:
+    - "compute29"
+    - "compute30"
+    - "compute31"
+    - "compute32"
+    - "compute33"
+    - "compute34"
+    - "compute35"
+    - "compute36"
+    - "compute37"
+    - "compute38"
+  metadata:
+    availability_zone: "DL-Rack-12"
 
 ###############################################################################
 # Configuration of Glance software images.
