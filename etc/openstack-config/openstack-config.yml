@@ -460,24 +460,28 @@ openstack_secgroup_stackhpc:
 # List of nova flavors in the openstack project. Format is as required by the
 # stackhpc.os-flavors role.
 openstack_flavors:
-  - "{{ hpc_v2_16cpu_64ram }}"
+  - "{{ hpc_v1_16cpu_64ram }}"
+  - "{{ hpc_v1_32cpu_128ram }}"
+  - "{{ mem_v1_56cpu_448ram }}"
+  - "{{ std_v1_8cpu_64ram }}"
+  - "{{ std_v1_16cpu_128ram }}"
+  - "{{ gpu_v1_16cpu_128ram_a100 }}"
   - "{{ hpc_v2_32cpu_128ram }}"
-  - "{{ hpc_v2_56cpu_448ram }}"
-  - "{{ hpc_v2_8cpu_64ram }}"
-  - "{{ hpc_v2_16cpu_128ram }}"
-  - "{{ hpc_v2_16cpu_128ram_a100 }}"
 
-# HPC v2:
+# HPC v1:
 # Core-pinned VCPUs
 # 4GB RAM per VCPU
 # Spread across NUMA regions (but in thread sibling pairs)
 # Slurm login node
-hpc_v2_16cpu_64ram:
-  name: "hpc.v2.16cpu.64ram"
+hpc_v1_16cpu_64ram:
+  name: "hpc.v1.16cpu.64ram"
   ram: 65536
   disk: 30
   vcpus: 16
   is_public: false
+  project:
+    - "{{ openstack_project_slurm_staging.name }}"
+    - "{{ openstack_project_slurm_production.name }}"
   extra_specs:
     hw:cpu_policy: "dedicated"
     hw:cpu_thread_policy: "prefer"
@@ -490,17 +494,20 @@ hpc_v2_16cpu_64ram:
     trait:CUSTOM_COMPUTE_STANDARD: "required"
     resources:CUSTOM_COMPUTE_STANDARD: 1
 
-# HPC v2:
+# HPC v1:
 # Core-pinned VCPUs
 # 4GB RAM per VCPU
 # Spread across NUMA regions (but in thread sibling pairs)
 # Slurm standard compute node
-hpc_v2_32cpu_128ram:
-  name: "hpc.v2.32cpu.128ram"
+hpc_v1_32cpu_128ram:
+  name: "hpc.v1.32cpu.128ram"
   ram: 131072
   disk: 30
   vcpus: 32
   is_public: false
+  project:
+    - "{{ openstack_project_slurm_staging.name }}"
+    - "{{ openstack_project_slurm_production.name }}"
   extra_specs:
     hw:cpu_policy: "dedicated"
     hw:cpu_thread_policy: "prefer"
@@ -513,17 +520,20 @@ hpc_v2_32cpu_128ram:
     trait:CUSTOM_COMPUTE_STANDARD: "required"
     resources:CUSTOM_COMPUTE_STANDARD: 2
 
-# HPC v2:
+# MEM v1:
 # Core-pinned VCPUs
 # 8GB RAM per VCPU
 # Spread across NUMA regions
 # Slurm highmem compute node
-hpc_v2_56cpu_448ram:
-  name: "hpc.v2.56cpu.448ram"
+mem_v1_56cpu_448ram:
+  name: "mem.v1.56cpu.448ram"
   ram: 458752
   disk: 30
   vcpus: 56
   is_public: false
+  project:
+    - "{{ openstack_project_slurm_staging.name }}"
+    - "{{ openstack_project_slurm_production.name }}"
   extra_specs:
     hw:cpu_policy: "dedicated"
     hw:mem_page_size: "1GB"
@@ -534,13 +544,13 @@ hpc_v2_56cpu_448ram:
     trait:CUSTOM_COMPUTE_HIGHMEM: "required"
     resources:CUSTOM_COMPUTE_HIGHMEM: 1
 
-# HPC v2:
+# STD v1:
 # Core-pinned VCPUs
 # 8GB RAM per VCPU
 # Spread across NUMA regions
 # General purpose small
-hpc_v2_8cpu_64ram:
-  name: "hpc.v2.8cpu.64ram"
+std_v1_8cpu_64ram:
+  name: "std.v1.8cpu.64ram"
   ram: 65536
   disk: 30
   vcpus: 8
@@ -555,13 +565,13 @@ hpc_v2_8cpu_64ram:
     trait:CUSTOM_COMPUTE_AUXILIARY: "required"
     resources:CUSTOM_COMPUTE_AUXILIARY: 1
 
-# HPC v2:
+# STD v1:
 # Core-pinned VCPUs
 # 8GB RAM per VCPU
 # Spread across NUMA regions
 # General purpose large
-hpc_v2_16cpu_128ram:
-  name: "hpc.v2.16cpu.128ram"
+std_v1_16cpu_128ram:
+  name: "std.v1.16cpu.128ram"
   ram: 131072
   disk: 30
   vcpus: 16
@@ -576,17 +586,20 @@ hpc_v2_16cpu_128ram:
     trait:CUSTOM_COMPUTE_AUXILIARY: "required"
     resources:CUSTOM_COMPUTE_AUXILIARY: 2
 
-# HPC v2:
+# GPU v1:
 # Core-pinned VCPUs
 # 8GB RAM per VCPU
 # Spread across NUMA regions
 # GPU A100
-hpc_v2_16cpu_128ram_a100:
-  name: "hpc.v2.16cpu.128ram.a100"
+gpu_v1_16cpu_128ram_a100:
+  name: "gpu.v1.16cpu.128ram.a100"
   ram: 131072
   disk: 30
   vcpus: 16
   is_public: false
+  project:
+    - "{{ openstack_project_slurm_staging.name }}"
+    - "{{ openstack_project_slurm_production.name }}"
   extra_specs:
     hw:cpu_policy: "dedicated"
     hw:mem_page_size: "1GB"
@@ -597,6 +610,32 @@ hpc_v2_16cpu_128ram_a100:
     pci_passthrough:alias: "a100_80:1"
     trait:CUSTOM_COMPUTE_GPU_A100: "required"
     resources:CUSTOM_COMPUTE_GPU_A100: 1
+
+# HPC v2:
+# Core-pinned VCPUs
+# 4GB RAM per VCPU
+# Spread across NUMA regions (but in thread sibling pairs)
+# Slurm standard compute node
+hpc_v2_32cpu_128ram:
+  name: "hpc.v2.32cpu.128ram"
+  ram: 131072
+  disk: 30
+  vcpus: 32
+  is_public: false
+  project:
+    - "{{ openstack_project_slurm_staging.name }}"
+    - "{{ openstack_project_slurm_production.name }}"
+  extra_specs:
+    hw:cpu_policy: "dedicated"
+    hw:cpu_thread_policy: "prefer"
+    hw:cpu_threads: 2
+    hw:mem_page_size: "1GB"
+    hw:cpu_sockets: 2
+    hw:numa_nodes: 8
+    hw:pci_numa_affinity_policy: preferred
+    hw_rng:allowed: "True"
+    trait:CUSTOM_COMPUTE_STANDARD_GEN2: "required"
+    resources:CUSTOM_COMPUTE_STANDARD_GEN2: 2
 
 ###############################################################################
 # Configuration of nova host aggregates.
