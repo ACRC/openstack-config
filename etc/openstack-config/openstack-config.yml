@@ -4,7 +4,7 @@
 
 # List of OpenStack domains. Format is as required by the stackhpc.os-projects
 # role.
-#openstack_domains:
+# openstack_domains:
 
 # List of OpenStack projects. Format is as required by the stackhpc.os-projects
 # role.
@@ -134,6 +134,21 @@ openstack_unlimited_quotas:
   security_group_rule: -1
   snapshots: -1
   volumes: -1
+
+###############################################################################
+# Configuration of volume types.
+
+# List of volume types in the openstack system. Format is ad required by
+# the stackhpc.openstack.os_volumes role.
+openstack_volumes_types:
+  - name: capacity
+    public: true
+    extra_specs:
+      volume_backend_name: 'capacity'
+  - name: iops
+    public: true
+    extra_specs:
+      volume_backend_name: 'iops'
 
 ###############################################################################
 # Configuration of networks, subnets and routers.
@@ -435,10 +450,9 @@ openstack_secgroup_stackhpc:
   project: "{{ openstack_project_stackhpc.name }}"
   rules: "{{ openstack_secgroup_rules_default }}"
 
-
 # List of RBAC definitions in the openstack projct. Format is as required by the
 # stackhpc.os-networks role.
-#openstack_networks_rbac:
+# openstack_networks_rbac:
 
 ###############################################################################
 # Configuration of nova flavors.
@@ -446,24 +460,28 @@ openstack_secgroup_stackhpc:
 # List of nova flavors in the openstack project. Format is as required by the
 # stackhpc.os-flavors role.
 openstack_flavors:
-  - "{{ hpc_v2_16cpu_64ram }}"
+  - "{{ hpc_v1_16cpu_64ram }}"
+  - "{{ hpc_v1_32cpu_128ram }}"
+  - "{{ mem_v1_56cpu_448ram }}"
+  - "{{ std_v1_8cpu_64ram }}"
+  - "{{ std_v1_16cpu_128ram }}"
+  - "{{ gpu_v1_16cpu_128ram_a100 }}"
   - "{{ hpc_v2_32cpu_128ram }}"
-  - "{{ hpc_v2_56cpu_448ram }}"
-  - "{{ hpc_v2_8cpu_64ram }}"
-  - "{{ hpc_v2_16cpu_128ram }}"
-  - "{{ hpc_v2_16cpu_128ram_a100 }}"
 
-# HPC v2:
+# HPC v1:
 # Core-pinned VCPUs
 # 4GB RAM per VCPU
 # Spread across NUMA regions (but in thread sibling pairs)
 # Slurm login node
-hpc_v2_16cpu_64ram:
-  name: "hpc.v2.16cpu.64ram"
+hpc_v1_16cpu_64ram:
+  name: "hpc.v1.16cpu.64ram"
   ram: 65536
   disk: 30
   vcpus: 16
   is_public: false
+  project:
+    - "{{ openstack_project_slurm_staging.name }}"
+    - "{{ openstack_project_slurm_production.name }}"
   extra_specs:
     hw:cpu_policy: "dedicated"
     hw:cpu_thread_policy: "prefer"
@@ -476,17 +494,20 @@ hpc_v2_16cpu_64ram:
     trait:CUSTOM_COMPUTE_STANDARD: "required"
     resources:CUSTOM_COMPUTE_STANDARD: 1
 
-# HPC v2:
+# HPC v1:
 # Core-pinned VCPUs
 # 4GB RAM per VCPU
 # Spread across NUMA regions (but in thread sibling pairs)
 # Slurm standard compute node
-hpc_v2_32cpu_128ram:
-  name: "hpc.v2.32cpu.128ram"
+hpc_v1_32cpu_128ram:
+  name: "hpc.v1.32cpu.128ram"
   ram: 131072
   disk: 30
   vcpus: 32
   is_public: false
+  project:
+    - "{{ openstack_project_slurm_staging.name }}"
+    - "{{ openstack_project_slurm_production.name }}"
   extra_specs:
     hw:cpu_policy: "dedicated"
     hw:cpu_thread_policy: "prefer"
@@ -499,17 +520,20 @@ hpc_v2_32cpu_128ram:
     trait:CUSTOM_COMPUTE_STANDARD: "required"
     resources:CUSTOM_COMPUTE_STANDARD: 2
 
-# HPC v2:
+# MEM v1:
 # Core-pinned VCPUs
 # 8GB RAM per VCPU
 # Spread across NUMA regions
 # Slurm highmem compute node
-hpc_v2_56cpu_448ram:
-  name: "hpc.v2.56cpu.448ram"
+mem_v1_56cpu_448ram:
+  name: "mem.v1.56cpu.448ram"
   ram: 458752
   disk: 30
   vcpus: 56
   is_public: false
+  project:
+    - "{{ openstack_project_slurm_staging.name }}"
+    - "{{ openstack_project_slurm_production.name }}"
   extra_specs:
     hw:cpu_policy: "dedicated"
     hw:mem_page_size: "1GB"
@@ -520,13 +544,13 @@ hpc_v2_56cpu_448ram:
     trait:CUSTOM_COMPUTE_HIGHMEM: "required"
     resources:CUSTOM_COMPUTE_HIGHMEM: 1
 
-# HPC v2:
+# STD v1:
 # Core-pinned VCPUs
 # 8GB RAM per VCPU
 # Spread across NUMA regions
 # General purpose small
-hpc_v2_8cpu_64ram:
-  name: "hpc.v2.8cpu.64ram"
+std_v1_8cpu_64ram:
+  name: "std.v1.8cpu.64ram"
   ram: 65536
   disk: 30
   vcpus: 8
@@ -541,13 +565,13 @@ hpc_v2_8cpu_64ram:
     trait:CUSTOM_COMPUTE_AUXILIARY: "required"
     resources:CUSTOM_COMPUTE_AUXILIARY: 1
 
-# HPC v2:
+# STD v1:
 # Core-pinned VCPUs
 # 8GB RAM per VCPU
 # Spread across NUMA regions
 # General purpose large
-hpc_v2_16cpu_128ram:
-  name: "hpc.v2.16cpu.128ram"
+std_v1_16cpu_128ram:
+  name: "std.v1.16cpu.128ram"
   ram: 131072
   disk: 30
   vcpus: 16
@@ -562,17 +586,20 @@ hpc_v2_16cpu_128ram:
     trait:CUSTOM_COMPUTE_AUXILIARY: "required"
     resources:CUSTOM_COMPUTE_AUXILIARY: 2
 
-# HPC v2:
+# GPU v1:
 # Core-pinned VCPUs
 # 8GB RAM per VCPU
 # Spread across NUMA regions
 # GPU A100
-hpc_v2_16cpu_128ram_a100:
-  name: "hpc.v2.16cpu.128ram.a100"
+gpu_v1_16cpu_128ram_a100:
+  name: "gpu.v1.16cpu.128ram.a100"
   ram: 131072
   disk: 30
   vcpus: 16
   is_public: false
+  project:
+    - "{{ openstack_project_slurm_staging.name }}"
+    - "{{ openstack_project_slurm_production.name }}"
   extra_specs:
     hw:cpu_policy: "dedicated"
     hw:mem_page_size: "1GB"
@@ -583,6 +610,32 @@ hpc_v2_16cpu_128ram_a100:
     pci_passthrough:alias: "a100_80:1"
     trait:CUSTOM_COMPUTE_GPU_A100: "required"
     resources:CUSTOM_COMPUTE_GPU_A100: 1
+
+# HPC v2:
+# Core-pinned VCPUs
+# 4GB RAM per VCPU
+# Spread across NUMA regions (but in thread sibling pairs)
+# Slurm standard compute node
+hpc_v2_32cpu_128ram:
+  name: "hpc.v2.32cpu.128ram"
+  ram: 131072
+  disk: 30
+  vcpus: 32
+  is_public: false
+  project:
+    - "{{ openstack_project_slurm_staging.name }}"
+    - "{{ openstack_project_slurm_production.name }}"
+  extra_specs:
+    hw:cpu_policy: "dedicated"
+    hw:cpu_thread_policy: "prefer"
+    hw:cpu_threads: 2
+    hw:mem_page_size: "1GB"
+    hw:cpu_sockets: 2
+    hw:numa_nodes: 8
+    hw:pci_numa_affinity_policy: preferred
+    hw_rng:allowed: "True"
+    trait:CUSTOM_COMPUTE_STANDARD_GEN2: "required"
+    resources:CUSTOM_COMPUTE_STANDARD_GEN2: 2
 
 ###############################################################################
 # Configuration of nova host aggregates.
@@ -985,20 +1038,19 @@ openstack_image_git_elements:
     version: master
     elements_path: elements
 
-
 # List of Diskimage Builder (DIB) elements paths to include in image builds.
-#openstack_image_elements:
+# openstack_image_elements:
 
 # List of Diskimage Builder (DIB) elements Git repositories to use in image
 # builds.
-#openstack_image_git_elements:
+# openstack_image_git_elements:
 
 ###############################################################################
 # Configuration of Magnum container clusters.
 
 # List of magnum cluster templates. Format is as required by the
 # stackhpc.os-container-clusters role.
-#openstack_container_clusters_templates:
+# openstack_container_clusters_templates:
 
 ###############################################################################
 # Configuration variables for generating new Magnum cluster template config.
@@ -1034,5 +1086,36 @@ openstack_image_git_elements:
 # magnum_cluster_templates_public:
 
 ###############################################################################
+# Configuration variables for a CloudKitty ratings service deployment.
+
+#     #    ###   #######  #####    IN ORDER TO SUCCESSFULLY DEPLOY CLOUDKITTY
+# #   #   #   #     #     #        'cloudkitty.conf' & 'metrics.yml' MUST BE
+#  #  #   #   #     #     ###      PROVIDED ALONGSIDE THE FOLLOWING CONFIG.
+#   # #   #   #     #     #        MORE INFO CAN BE FOUND IN THE README.md
+#     #    ###      #     #####    'stackhpc-kayobe-config' DOCS.
+# A list where each item is a dictionary mapping the associated fields,
+# with the 'mappings' field also being a list of dictionaries. Example
+# of the mappings and their fields can be found below, however for more
+# information please refer to the stackhpc.openstack.os_ratings role docs.
+#
+# openstack_ratings_hashmap_field_mappings:
+#   - service: SERVICE_NAME
+#     name: FIELD_NAME
+#     mappings:
+#       - value: MAPPING_VALUE
+#         cost: MAPPING_COST
+#         type: MAPPING_TYPE
+#         group: MAPPING_GROUP <---THIS IS OPTIONAL---
+
+# Much like the field mappings above, the service mappings are a list of
+# dictionaries, however these are not associated with a field.
+#
+# openstack_ratings_hashmap_service_mappings:
+#   - service: SERVICE_NAME
+#     cost: MAPPING_COST
+#     type: MAPPING_TYPE
+#     group: MAPPING_GROUP <---THIS IS OPTIONAL---
+
+###############################################################################
 # Dummy variable to allow Ansible to accept this file.
-workaround_ansible_issue_8743: yes
+workaround_ansible_issue_8743: true
