@@ -337,6 +337,7 @@ openstack_network_slurm_staging_control:
   project: "{{ openstack_project_slurm_staging.name }}"
   shared: false
   external: false
+  mtu: 1500
   port_security_enabled: false
   provider_network_type: "vlan"
   provider_physical_network: "physnet3"
