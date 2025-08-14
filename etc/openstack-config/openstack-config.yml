@@ -160,7 +160,8 @@ openstack_networks:
   #- "{{ openstack_network_external_ceph }}"
   #- "{{ openstack_network_stackhpc }}"
   #- "{{ openstack_network_stackhpc_vlan }}"
-  - "{{ openstack_network_slurm_staging }}"
+  - "{{ openstack_network_slurm_staging_comm }}"
+  - "{{ openstack_network_slurm_staging_control }}"
   - "{{ openstack_network_slurm_production }}"
 
 openstack_networks_rbac:
@@ -312,29 +313,50 @@ secgroup_nvidia_dls:
 ################################################################################
 # Networks for Slurm staging
 #
-openstack_network_slurm_staging:
-  name: "{{ openstack_project_slurm_staging.name }}"
+openstack_network_slurm_staging_comm:
+  name: "{{ openstack_project_slurm_staging.name }}-comm-net"
   project: "{{ openstack_project_slurm_staging.name }}"
   shared: false
   external: false
+  port_security_enabled: false
   provider_network_type: "vlan"
   provider_physical_network: "physnet2"
   subnets:
-    - "{{ openstack_subnet_slurm_staging }}"
+    - "{{ openstack_subnet_slurm_staging_comm }}"
 
-openstack_subnet_slurm_staging:
-  name: "{{ openstack_project_slurm_staging.name }}"
+openstack_subnet_slurm_staging_comm:
+  name: "{{ openstack_project_slurm_staging.name }}-comm-subnet"
+  project: "{{ openstack_project_slurm_staging.name }}"
+  cidr: "192.168.1.0/24"
+  no_gateway_ip: true
+  allocation_pool_start: "192.168.1.10"
+  allocation_pool_end: "192.168.1.250"
+
+openstack_network_slurm_staging_control:
+  name: "{{ openstack_project_slurm_staging.name }}-control-net"
+  project: "{{ openstack_project_slurm_staging.name }}"
+  shared: false
+  external: false
+  port_security_enabled: false
+  provider_network_type: "vlan"
+  provider_physical_network: "physnet3"
+  subnets:
+    - "{{ openstack_subnet_slurm_staging_control }}"
+
+openstack_subnet_slurm_staging_control:
+  name: "{{ openstack_project_slurm_staging.name }}-control-subnet"
   project: "{{ openstack_project_slurm_staging.name }}"
   cidr: "192.168.0.0/24"
   gateway_ip: "192.168.0.1"
   allocation_pool_start: "192.168.0.10"
   allocation_pool_end: "192.168.0.250"
 
+
 openstack_router_slurm_staging:
-  name: "{{ openstack_project_slurm_staging.name }}"
+  name: "{{ openstack_project_slurm_staging.name }}-router"
   project: "{{ openstack_project_slurm_staging.name }}"
   interfaces:
-    - "{{ openstack_network_slurm_staging.name }}"
+    - "{{ openstack_subnet_slurm_staging_control.name }}"
   network: "{{ openstack_network_external_internet.name }}"
 
 openstack_secgroup_slurm_staging_default:
