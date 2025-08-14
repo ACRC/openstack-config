@@ -676,8 +676,8 @@ openstack_aggregate_rack_6:
 #   - "compute14"
     - "compute15"
     - "compute16"
-#   - "compute17"
-#   - "compute18"
+    - "compute17"
+    - "compute18"
   availability_zone: "DL-Rack-6"
 
 # PTR Rack 11
