@@ -347,10 +347,10 @@ openstack_network_slurm_staging_control:
 openstack_subnet_slurm_staging_control:
   name: "{{ openstack_project_slurm_staging.name }}-control-subnet"
   project: "{{ openstack_project_slurm_staging.name }}"
-  cidr: "192.168.0.0/24"
-  gateway_ip: "192.168.0.1"
-  allocation_pool_start: "192.168.0.10"
-  allocation_pool_end: "192.168.0.250"
+  cidr: "192.168.16.0/24"
+  gateway_ip: "192.168.16.1"
+  allocation_pool_start: "192.168.16.10"
+  allocation_pool_end: "192.168.16.250"
 
 
 openstack_router_slurm_staging:
