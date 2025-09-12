@@ -179,7 +179,7 @@ openstack_network_external_internet:
   project: "admin"
   provider_network_type: "vlan"
   provider_physical_network: "physnet1"
-  provider_segmentation_id: 2803
+  provider_segmentation_id: 2280
   shared: false
   external: true
   # Subnet configuration.
@@ -189,10 +189,10 @@ openstack_network_external_internet:
 openstack_subnet_external_internet:
   name: "{{ openstack_network_external_internet_name }}"
   project: "admin"
-  cidr: "10.129.30.0/23"
-  gateway_ip: "10.129.31.254"
-  allocation_pool_start: "10.129.30.20"
-  allocation_pool_end: "10.129.31.240"
+  cidr: "10.3.0.0/24"
+  gateway_ip: "10.3.0.250"
+  allocation_pool_start: "10.3.0.10"
+  allocation_pool_end: "10.3.0.249"
 
 #
 # External/Ceph network
