@@ -160,9 +160,10 @@ openstack_networks:
   #- "{{ openstack_network_external_ceph }}"
   #- "{{ openstack_network_stackhpc }}"
   #- "{{ openstack_network_stackhpc_vlan }}"
-  - "{{ openstack_network_slurm_staging_comm }}"
+  - "{{ openstack_network_slurm_staging_rdma }}"
   - "{{ openstack_network_slurm_staging_control }}"
-  - "{{ openstack_network_slurm_production }}"
+  - "{{ openstack_network_slurm_production_rdma }}"
+  - "{{ openstack_network_slurm_production_control }}"
 
 openstack_networks_rbac:
   - "{{ openstack_rbac_external_ceph }}"
@@ -313,8 +314,8 @@ secgroup_nvidia_dls:
 ################################################################################
 # Networks for Slurm staging
 #
-openstack_network_slurm_staging_comm:
-  name: "{{ openstack_project_slurm_staging.name }}-comm-net"
+openstack_network_slurm_staging_rdma:
+  name: "{{ openstack_project_slurm_staging.name }}-rdma-net"
   project: "{{ openstack_project_slurm_staging.name }}"
   shared: false
   external: false
@@ -322,10 +323,10 @@ openstack_network_slurm_staging_comm:
   provider_network_type: "vlan"
   provider_physical_network: "physnet2"
   subnets:
-    - "{{ openstack_subnet_slurm_staging_comm }}"
+    - "{{ openstack_subnet_slurm_staging_rdma }}"
 
-openstack_subnet_slurm_staging_comm:
-  name: "{{ openstack_project_slurm_staging.name }}-comm-subnet"
+openstack_subnet_slurm_staging_rdma:
+  name: "{{ openstack_project_slurm_staging.name }}-rdma-subnet"
   project: "{{ openstack_project_slurm_staging.name }}"
   cidr: "192.168.1.0/24"
   no_gateway_ip: true
@@ -337,7 +338,7 @@ openstack_network_slurm_staging_control:
   project: "{{ openstack_project_slurm_staging.name }}"
   shared: false
   external: false
-  port_security_enabled: false
+  mtu: 1500
   provider_network_type: "vlan"
   provider_physical_network: "physnet3"
   subnets:
@@ -346,10 +347,10 @@ openstack_network_slurm_staging_control:
 openstack_subnet_slurm_staging_control:
   name: "{{ openstack_project_slurm_staging.name }}-control-subnet"
   project: "{{ openstack_project_slurm_staging.name }}"
-  cidr: "192.168.0.0/24"
-  gateway_ip: "192.168.0.1"
-  allocation_pool_start: "192.168.0.10"
-  allocation_pool_end: "192.168.0.250"
+  cidr: "192.168.16.0/24"
+  gateway_ip: "192.168.16.1"
+  allocation_pool_start: "192.168.16.10"
+  allocation_pool_end: "192.168.16.250"
 
 
 openstack_router_slurm_staging:
@@ -376,30 +377,56 @@ openstack_secgroup_slurm_staging_https:
 
 ################################################################################
 # Networks for Slurm production
-#
-openstack_network_slurm_production:
-  name: "{{ openstack_project_slurm_production.name }}"
+
+openstack_network_slurm_production_control:
+  name: "{{ openstack_project_slurm_production.name }}-control-net"
   project: "{{ openstack_project_slurm_production.name }}"
-  shared: true
+  shared: true          # Also accessed by the Slurm appliance control host
   external: false
+  mtu: 1500
+  port_security_enabled: true
+  provider_network_type: "vlan"
+  provider_physical_network: "physnet3"
+  subnets:
+    - "{{ openstack_subnet_slurm_production_control }}"
+
+openstack_subnet_slurm_production_control:
+  name: "{{ openstack_project_slurm_production.name }}-control-subnet"
+  project: "{{ openstack_project_slurm_production.name }}"
+  cidr: "192.168.0.0/21"
+  gateway_ip: "192.168.0.1"
+  enable_dhcp: true
+  dns_nameservers:
+    - "137.222.0.36"
+    - "137.222.0.39"
+  allocation_pool_start: "192.168.0.10"
+  allocation_pool_end: "192.168.7.250"
+
+openstack_network_slurm_production_rdma:
+  name: "{{ openstack_project_slurm_production.name }}-rdma-net"
+  project: "{{ openstack_project_slurm_production.name }}"
+  shared: false
+  external: false
+  port_security_enabled: false
   provider_network_type: "vlan"
   provider_physical_network: "physnet2"
   subnets:
-    - "{{ openstack_subnet_slurm_production }}"
+    - "{{ openstack_subnet_slurm_production_rdma }}"
 
-openstack_subnet_slurm_production:
-  name: "{{ openstack_project_slurm_production.name }}"
+openstack_subnet_slurm_production_rdma:
+  name: "{{ openstack_project_slurm_production.name }}-rdma-subnet"
   project: "{{ openstack_project_slurm_production.name }}"
   cidr: "192.168.8.0/21"
-  gateway_ip: "192.168.8.1"
+  no_gateway_ip: true
+  enable_dhcp: false
   allocation_pool_start: "192.168.8.10"
   allocation_pool_end: "192.168.15.250"
 
 openstack_router_slurm_production:
-  name: "{{ openstack_project_slurm_production.name }}"
+  name: "{{ openstack_project_slurm_production.name }}-router"
   project: "{{ openstack_project_slurm_production.name }}"
   interfaces:
-    - "{{ openstack_network_slurm_production.name }}"
+    - "{{ openstack_subnet_slurm_production_control.name }}"
   network: "{{ openstack_network_external_internet.name }}"
 
 openstack_secgroup_slurm_production_default:
@@ -691,7 +718,7 @@ openstack_aggregate_rack_6:
   name: "DL-Rack-6"
   hosts:
     - "compute9"
-#   - "compute10"
+    - "compute10"
     - "compute11"
     - "compute12"
     - "compute13"
