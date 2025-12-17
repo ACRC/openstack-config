@@ -722,7 +722,7 @@ openstack_aggregate_rack_6:
     - "compute11"
     - "compute12"
     - "compute13"
-#   - "compute14"
+    - "compute14"
     - "compute15"
     - "compute16"
     - "compute17"
@@ -742,7 +742,7 @@ openstack_aggregate_rack_11:
     - "compute25"
     - "compute26"
     - "compute27"
-#   - "compute28"
+    - "compute28"
   availability_zone: "DL-Rack-11"
 
 # PTR Rack 12
